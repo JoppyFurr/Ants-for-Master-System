@@ -13,4 +13,4 @@ int tms9928a_close_files (void);
 void tms9928a_new_input_file (const char *name);
 
 /* Process a single tile. */
-void tms9928a_process_tile (pixel_t *buffer, uint32_t stride);
+void tms9928a_process_tile (pixel_t *buffer);

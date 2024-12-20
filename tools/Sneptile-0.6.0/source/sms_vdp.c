@@ -16,6 +16,7 @@
 static uint32_t pattern_index = 0;
 static uint8_t palette [16] = { };
 static uint32_t palette_size = 0;
+static uint32_t file_first_index = 0; /* TODO: Only needed while the de-duplication buffer is per-file */
 
 /* Mode-4 Output Files */
 static FILE *pattern_file = NULL;
@@ -101,8 +102,51 @@ void mode4_new_input_file (const char *name)
     }
 
     fprintf (pattern_index_file, " %d\n", pattern_index);
+    file_first_index = pattern_index;
 }
 
+
+/*
+ * Generate panel indexes for the file.
+ */
+void mode4_process_panels (const char *name, uint32_t panel_count, uint32_t panel_width, uint32_t panel_height, pixel_t *buffer)
+{
+    fprintf (pattern_index_file, "uint16_t panel_");
+
+    /* TODO: Stripping the extension from the name could be done somewhere common. */
+    for (char c = *name; *name != '\0'; c = *++name)
+    {
+        /* Don't include the file extension */
+        if (c == '.')
+        {
+            break;
+        }
+
+        fprintf (pattern_index_file, "%c", tolower(c));
+    }
+
+    fprintf (pattern_index_file, " [%d] [%d] = {\n", panel_count, panel_width * panel_height);
+
+    for (uint32_t panel_row = 0; panel_row < current_image.height; panel_row += 8 * panel_height)
+    for (uint32_t panel_col = 0; panel_col < current_image.width; panel_col += 8 * panel_width)
+    {
+        fprintf (pattern_index_file, "    {");
+        for (uint32_t row = panel_row; row < panel_row + panel_height * 8; row += 8)
+        for (uint32_t col = panel_col; col < panel_col + panel_width * 8; col += 8)
+        {
+            fprintf (pattern_index_file, "%s%3d", (
+                    (col == panel_col && row == panel_row) ? " " : ", "),
+                    file_first_index + sneptile_get_match (&buffer [row * current_image.width + col]));
+        }
+        fprintf (pattern_index_file, " }%s\n", (panel_count > 1) ? "," : "");
+
+        if (--panel_count == 0)
+        {
+            break;
+        }
+    }
+    fprintf (pattern_index_file, "};\n");
+}
 
 /*
  * Convert from 6-bit SMS colour to the equivalent 12-bit GG colour.
@@ -204,7 +248,8 @@ static uint8_t mode4_rgb_to_index (pixel_t p)
                    | ((p.b & 0xc0) >> 2);
 
     /* Next, check if the colour is already in the palette */
-    for (uint32_t i = 0; i < palette_size; i++)
+    uint32_t start = (target == VDP_MODE_4_SPRITES) ? 1 : 0;
+    for (uint32_t i = start; i < palette_size; i++)
     {
         if (palette [i] == colour)
         {
@@ -220,7 +265,7 @@ static uint8_t mode4_rgb_to_index (pixel_t p)
 /*
  * Process a single 8×8 tile.
  */
-void mode4_process_tile (pixel_t *buffer, uint32_t stride)
+void mode4_process_tile (pixel_t *buffer)
 {
     fprintf (pattern_file, "    ");
     for (uint32_t y = 0; y < 8; y++)
@@ -230,7 +275,7 @@ void mode4_process_tile (pixel_t *buffer, uint32_t stride)
         for (uint32_t x = 0; x < 8; x++)
         {
             uint8_t index = 0;
-            pixel_t p = buffer [x + y * stride];
+            pixel_t p = buffer [x + y * current_image.width];
 
             /* If the pixel is non-transparent, calculate its colour index */
             if (p.a != 0)

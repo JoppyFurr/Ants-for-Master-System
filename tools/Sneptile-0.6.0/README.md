@@ -11,8 +11,11 @@ Usage: `./Sneptile [--mode-0] --output tile_data --palette 0x04 0x19 empty.png c
  * `--mode-2`: Generate Mode-2 tiles.
  * `--tms-small-sprites`: Generate 8x8 sprites for the TMS modes.
  * `--tms-large-sprites`: Generate 16x16 sprites for the TMS modes.
+ * `--sprites`: Mode-4 sprites. Index 0 will not be used for visible colours.
+ * `--de-duplicate`: Within an input file, don't generate the same pattern twice.
  * `--output <dir>`: specifies the directory for the generated files
  * `--palette <0x...>`: specifies the first n entries of the palette
+ * `--panels wxh,n`: Per-image, describes <n> panels of size <w> x <h> tiles. Mode-4 only, and depends on de-duplication.
  * `... <.png>`: the remaining parameters are `.png` images to generate tiles from
 
 The following three files are generated in the specified output directory:
@@ -60,6 +63,34 @@ is available both in 6-bit Master System format, and a 12-bit Game Gear format, 
 re-use on the Game Gear.
 
 To select the correct palette, you will need to define one of `TARGET_SMS` or `TARGET_GG`.
+
+## Panels
+Per-file, a panel size and count can be described. When used an array of indexes will
+be generated in pattern_index.h.
+
+An example showing two files.
+The first file containing a single tile, the second containing 31 playing card panels:
+```
+./Sneptile --de-duplicate --sprites --palette 0x00 \
+    tiles/empty.png \
+    --panels 4x6,31 \
+    tiles/cards.png
+
+```
+will generate the following pattern_index.h:
+```
+#define PATTERN_EMPTY 0
+#define PATTERN_CARDS 1
+uint16_t panel_cards [31] [24] = {
+    {   1,   2,   3,   4,  13,  14,  15,  16,  13,  46,  46,  16,  67,  68,  69,  70, 100, 101, 101, 102, 112, 113, 113, 114 },
+    {   1,   2,   3,   4,  13,  17,  18,  16,  13,  46,  46,  16,  71,  72,  73,  74, 100, 101, 101, 102, 112, 113, 113, 114 },
+    ...
+    { 194, 195, 199, 202, 207, 223, 224, 210, 240, 243, 244, 210, 259, 260, 261, 262, 240, 276, 277, 210, 278, 279, 279, 280 },
+    { 281, 282, 283, 284, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305 }
+};
+```
+
+Note that, for now: --panels will only work when using mode-4 and de-duplication.
 
 ## TMS99xx Mode-0 and Mode-2
 

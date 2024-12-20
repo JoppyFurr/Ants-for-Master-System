@@ -533,8 +533,10 @@ static void tms9928a_process_tile_8 (pixel_t *buffer, uint32_t stride)
  * The tile size is 8×8 for the tile-map and small sprites.
  * The tile size is 16×16 for large sprites.
  */
-void tms9928a_process_tile (pixel_t *buffer, uint32_t stride)
+void tms9928a_process_tile (pixel_t *buffer)
 {
+    uint32_t stride = current_image.width;
+
     if (target == VDP_MODE_TMS_LARGE_SPRITES)
     {
         /* Sprite layout: 0 2
