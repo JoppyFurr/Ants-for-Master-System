@@ -57,6 +57,10 @@ void main (void)
     sram_load ();
     rng_seed ();
 
+    /* Draw / discard area */
+    SMS_loadTileMapArea (12, 0, panel_cards [30], 4, 6);
+    SMS_loadTileMapArea (16, 0, panel_cards [0], 4, 6);
+
     uint16_t timer = 0;
     uint16_t x = 0;
 
@@ -67,7 +71,7 @@ void main (void)
         if (timer++ == 60)
         {
             timer = 0;
-            SMS_loadTileMapArea (x, 18, panel_cards [rand () % 31], 4, 6);
+            SMS_loadTileMapArea (x, 18, panel_cards [rand () % 30], 4, 6);
             x = (x + 4) & 0x1f;
         }
 
