@@ -37,7 +37,9 @@ typedef enum card_e
     CARD_SORCERER,
     CARD_DRAGON,
     CARD_PIXIES,
-    CARD_CURSE
+    CARD_CURSE,
+
+    CARD_BACK
 } card_t;
 
 typedef enum card_type_e
