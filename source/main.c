@@ -20,6 +20,27 @@
 #include "save.h"
 #include "rng.h"
 
+#define HAND_Y_TILE 18
+#define HAND_Y_SPRITE 144
+
+#define DRAW_X_TILE 12
+#define DRAW_Y_TILE 0
+#define DRAW_X_SPRITE 96
+#define DRAW_Y_SPRITE 0
+
+#define DISCARD_X_TILE 16
+#define DISCARD_Y_TILE 0
+#define DISCARD_X_SPRITE 128
+#define DISCARD_Y_SPRITE 0
+
+/* Hands */
+card_t hand_1 [8] = { 0 };
+
+/* Slide animation variables */
+uint16_t slide_start_x = 0;
+uint16_t slide_start_y = 0;
+card_t slide_card = 0;
+
 
 /*
  * Fill the name table with tile-zero.
@@ -56,6 +77,23 @@ static inline void render_card_as_sprite (uint16_t x, uint16_t y, card_t card)
 
 
 /*
+ * Clear a card from the background.
+ */
+static inline void clear_card_from_tile (uint8_t x, uint8_t y)
+{
+    uint16_t empty_slot [24] = {
+        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
+        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
+        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
+        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
+        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
+        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY
+    };
+    SMS_loadTileMapArea (x, y, empty_slot, 4, 6);
+}
+
+
+/*
  * Render a card to the background.
  */
 static inline void render_card_as_tile (uint8_t x, uint8_t y, card_t card)
@@ -65,27 +103,39 @@ static inline void render_card_as_tile (uint8_t x, uint8_t y, card_t card)
 
 
 /*
- * Animate a card sliding from one position to another.
+ * Prepare for the card sliding animation.
+ * This will render the card as a sprite in the starting position.
  */
-void card_slide (uint16_t start_x, uint16_t start_y,
-                 uint16_t end_x, uint16_t end_y, card_t card)
-{
-    uint16_t x;
-    uint16_t y;
 
-    x = start_x << 4;
-    y = start_y << 4;
+void card_slide_from (uint16_t start_x, uint16_t start_y, card_t card)
+{
+    slide_start_x = start_x;
+    slide_start_y = start_y;
 
     SMS_initSprites ();
     render_card_as_sprite (start_x, start_y, card);
 
     SMS_waitForVBlank ();
     SMS_copySpritestoSAT ();
+}
+
+
+/*
+ * Animate a card sliding from the start position to the end
+ * position, leaving it rendered as a sprite.
+ */
+void card_slide_to (uint16_t end_x, uint16_t end_y, card_t card)
+{
+    uint16_t x;
+    uint16_t y;
+
+    x = slide_start_x << 4;
+    y = slide_start_y << 4;
 
     for (uint8_t frame = 0; frame < 16; frame++)
     {
-        x += end_x - start_x;
-        y += end_y - start_y;
+        x += end_x - slide_start_x;
+        y += end_y - slide_start_y;
 
         SMS_initSprites ();
         render_card_as_sprite (x >> 4, y >> 4, card);
@@ -95,8 +145,65 @@ void card_slide (uint16_t start_x, uint16_t start_y,
         SMS_copySpritestoSAT ();
     }
 
-    /* Note, we don't clear the sprite here, as first the caller
-     * needs to place the card the background. */
+    /* Note, we don't clear the sprite here. First the
+     * caller needs to draw the card into the background. */
+}
+
+
+/*
+ * Clear the card sprite animation. This should be called
+ * once the card has been drawn to the background.
+ */
+void card_slide_done (void)
+{
+    SMS_initSprites ();
+    SMS_copySpritestoSAT ();
+}
+
+
+/*
+ * Draw a card and place it into the active player's hand.
+ */
+void draw_card (uint8_t slot)
+{
+    /* Deal */
+    card_t card = rand () % 30;
+    hand_1 [slot] = card;
+
+    /* Animate */
+    card_slide_from (DRAW_X_SPRITE, DRAW_Y_SPRITE, card);
+    card_slide_to (slot << 5, HAND_Y_SPRITE, card);
+    render_card_as_tile (slot << 2, HAND_Y_TILE, card);
+    card_slide_done ();
+}
+
+
+/*
+ * Play a card from the active player's hand.
+ */
+void play_card (uint8_t slot)
+{
+    card_t card = hand_1 [slot];
+
+    /* Animate */
+    card_slide_from (slot << 5, HAND_Y_SPRITE, card);
+    clear_card_from_tile (slot << 2, HAND_Y_TILE);
+    card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE, card);
+    render_card_as_tile (DISCARD_X_TILE, DISCARD_Y_TILE, card);
+    card_slide_done ();
+}
+
+
+/*
+ * Delay until the chosen number of frames have passed.
+ */
+void delay_frames (uint8_t frames)
+{
+    while (frames)
+    {
+        SMS_waitForVBlank ();
+        frames--;
+    }
 }
 
 
@@ -126,24 +233,21 @@ void main (void)
     render_card_as_tile (12, 0, CARD_BACK);
     render_card_as_tile (16, 0, CARD_RESERVE);
 
-    uint16_t timer = 0;
-    uint16_t x = 0;
+    /* Deal initial hand */
+    for (uint8_t i = 0; i < 8; i++)
+    {
+        draw_card (i);
+    }
 
     while (1)
     {
-        SMS_waitForVBlank ();
+        uint8_t move = rand () & 0x07;
 
-        if (timer++ == 60)
-        {
-            card_t card = rand () % 30;
-            timer = 0;
-            card_slide (96, 0, x << 3, 18 << 3, card);
-            render_card_as_tile (x, 18, card);
-            SMS_initSprites ();
-            SMS_copySpritestoSAT ();
-            x = (x + 4) & 0x1f;
-        }
+        delay_frames (60);
+        play_card (move);
 
+        delay_frames (30);
+        draw_card (move);
     }
 }
 
