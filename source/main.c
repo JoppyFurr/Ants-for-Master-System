@@ -36,6 +36,16 @@
 /* Hands */
 card_t hand_1 [8] = { 0 };
 
+/* Reserved patterns for card sprite use */
+static const uint8_t card_sprite [24] =  {
+    PATTERN_CARD_SPRITE +  0, PATTERN_CARD_SPRITE +  1, PATTERN_CARD_SPRITE +  2, PATTERN_CARD_SPRITE +  3,
+    PATTERN_CARD_SPRITE +  4, PATTERN_CARD_SPRITE +  5, PATTERN_CARD_SPRITE +  6, PATTERN_CARD_SPRITE +  7,
+    PATTERN_CARD_SPRITE +  8, PATTERN_CARD_SPRITE +  9, PATTERN_CARD_SPRITE + 10, PATTERN_CARD_SPRITE + 11,
+    PATTERN_CARD_SPRITE + 12, PATTERN_CARD_SPRITE + 13, PATTERN_CARD_SPRITE + 14, PATTERN_CARD_SPRITE + 15,
+    PATTERN_CARD_SPRITE + 16, PATTERN_CARD_SPRITE + 17, PATTERN_CARD_SPRITE + 18, PATTERN_CARD_SPRITE + 19,
+    PATTERN_CARD_SPRITE + 20, PATTERN_CARD_SPRITE + 21, PATTERN_CARD_SPRITE + 22, PATTERN_CARD_SPRITE + 23
+};
+
 /* Slide animation variables */
 uint16_t slide_start_x = 0;
 uint16_t slide_start_y = 0;
@@ -57,9 +67,23 @@ static inline void clear_background (void)
 
 
 /*
- * Render a card as sprites.
+ * Draw the selected card into the reserved patterns.
  */
-static inline void render_card_as_sprite (uint16_t x, uint16_t y, card_t card)
+static inline void render_card_as_sprite_prepare (card_t card)
+{
+    for (uint8_t i = 0; i < 24; i++)
+    {
+        uint16_t pattern = panel_cards [card] [i] << 3;
+        SMS_loadTiles (&patterns [pattern], card_sprite [i], 32);
+    }
+}
+
+
+/*
+ * Draw the card, already in the reserved pattern area, using sprites.
+ * TODO: Consider using SMS_updateSpritePosition.
+ */
+static inline void render_card_as_sprite (uint16_t x, uint16_t y)
 {
     uint8_t pattern_index = 0;
 
@@ -70,7 +94,7 @@ static inline void render_card_as_sprite (uint16_t x, uint16_t y, card_t card)
          *       The cards use more than 256 patterns, so the particular card
          *       we want to render may need to be copied to a lower VRAM address. */
         SMS_addSprite (x + (panel_x << 3),
-                       y + (panel_y << 3), panel_cards [card] [pattern_index++]);
+                       y + (panel_y << 3), card_sprite [pattern_index++]);
 
     }
 }
@@ -113,7 +137,8 @@ void card_slide_from (uint16_t start_x, uint16_t start_y, card_t card)
     slide_start_y = start_y;
 
     SMS_initSprites ();
-    render_card_as_sprite (start_x, start_y, card);
+    render_card_as_sprite_prepare (card);
+    render_card_as_sprite (start_x, start_y);
 
     SMS_waitForVBlank ();
     SMS_copySpritestoSAT ();
@@ -124,7 +149,7 @@ void card_slide_from (uint16_t start_x, uint16_t start_y, card_t card)
  * Animate a card sliding from the start position to the end
  * position, leaving it rendered as a sprite.
  */
-void card_slide_to (uint16_t end_x, uint16_t end_y, card_t card)
+void card_slide_to (uint16_t end_x, uint16_t end_y)
 {
     uint16_t x;
     uint16_t y;
@@ -138,7 +163,7 @@ void card_slide_to (uint16_t end_x, uint16_t end_y, card_t card)
         y += end_y - slide_start_y;
 
         SMS_initSprites ();
-        render_card_as_sprite (x >> 4, y >> 4, card);
+        render_card_as_sprite (x >> 4, y >> 4);
 
         /* Write the new sprite position only during vblank. */
         SMS_waitForVBlank ();
@@ -172,7 +197,7 @@ void draw_card (uint8_t slot)
 
     /* Animate */
     card_slide_from (DRAW_X_SPRITE, DRAW_Y_SPRITE, card);
-    card_slide_to (slot << 5, HAND_Y_SPRITE, card);
+    card_slide_to (slot << 5, HAND_Y_SPRITE);
     render_card_as_tile (slot << 2, HAND_Y_TILE, card);
     card_slide_done ();
 }
@@ -188,7 +213,7 @@ void play_card (uint8_t slot)
     /* Animate */
     card_slide_from (slot << 5, HAND_Y_SPRITE, card);
     clear_card_from_tile (slot << 2, HAND_Y_TILE);
-    card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE, card);
+    card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE);
     render_card_as_tile (DISCARD_X_TILE, DISCARD_Y_TILE, card);
     card_slide_done ();
 }

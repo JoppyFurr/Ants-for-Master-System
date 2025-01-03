@@ -31,11 +31,10 @@ build_ants_for_master_system ()
     echo "  Generating tile data..."
     mkdir -p tile_data
     (
-        # Index 0 is used for transparency, use dark grey, our background colour.
-        # Index 1, 2, and 3, are used for the cursor colour-cycle.
-        # Index 4 is used for the selected key colour, and the floating digits.
+        # Index 0 is used for transparency, use black, our background colour.
         $sneptile --sprites --de-duplicate --output tile_data --palette 0x00 --output tile_data \
             tiles/empty.png \
+            --reserve card_sprite,24 \
             --panels 4x6,31 \
             tiles/cards.png
     )
