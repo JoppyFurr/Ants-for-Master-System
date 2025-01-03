@@ -76,6 +76,42 @@ int mode4_open_files (void)
 
 
 /*
+ * Reserve patterns,
+ * Eg, for runtime generated patterns.
+ */
+void mode4_reserve_patterns (const char *name, uint32_t count)
+{
+    /* Generate header in patterns file */
+    fprintf (pattern_file, "\n    /* %s (reserved) */\n", name);
+
+    /* Generate pattern index define */
+    fprintf (pattern_index_file, "#define PATTERN_");
+    for (char c = *name; *name != '\0'; c = *++name)
+    {
+        /* Don't include the file extension */
+        if (c == '.')
+        {
+            break;
+        }
+        if (!isalnum (c))
+        {
+            c = '_';
+        }
+
+        fprintf (pattern_index_file, "%c", toupper(c));
+    }
+    fprintf (pattern_index_file, " %d\n", pattern_index);
+
+    /* Generate all-zero patterns in patterns file */
+    while (count--)
+    {
+        fprintf (pattern_file, "    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,\n");
+        pattern_index++;
+    }
+}
+
+
+/*
  * Mark the start of a new source file.
  */
 void mode4_new_input_file (const char *name)

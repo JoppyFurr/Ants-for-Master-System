@@ -272,7 +272,8 @@ int main (int argc, char **argv)
 
     if (argc < 2)
     {
-        fprintf (stderr, "Usage: %s [options] <tiles.png>\n", argv [0]);
+        fprintf (stderr, "Usage: %s [global options] [per-sheet options, tiles.png]\n", argv [0]);
+        fprintf (stderr, "  Global options:\n");
         fprintf (stderr, "    --mode-0 : Generate TMS99xx mode-0 patterns\n");
         fprintf (stderr, "    --mode-2 : Generate TMS99xx mode-2 patterns\n");
         fprintf (stderr, "    --sprites : Mode-4 sprites. Index 0 will not be used for visible colours.\n");
@@ -281,7 +282,9 @@ int main (int argc, char **argv)
         fprintf (stderr, "    --de-duplicate : Within an input file, don't generate the same pattern twice\n");
         fprintf (stderr, "    --output <dir> : Specify output directory\n");
         fprintf (stderr, "    --palette <0x00 0x01..> : Pre-defined palette entries.\n");
-        fprintf (stderr, "    --panels wxh,n : The following sheet contains <n> panels of size <w> x <h>. Depends on de-duplication.\n");
+        fprintf (stderr, "  Per-sheet options:\n");
+        fprintf (stderr, "    --reserve <name,n> : Reserve <n> patterns before the next sheet (eg, for runtime generated patterns)\n");
+        fprintf (stderr, "    --panels <wxh,n> : The following sheet contains <n> panels of size <w> x <h>. Depends on de-duplication.\n");
         return EXIT_FAILURE;
     }
     argv++;
@@ -385,7 +388,24 @@ int main (int argc, char **argv)
     {
         for (uint32_t i = 0; i < argc; i++)
         {
-            if (strcmp (argv[i], "--panels") == 0)
+            if (strcmp (argv [i], "--reserve") == 0)
+            {
+                char name [80] = { '\0' };
+                unsigned int count;
+                sscanf (argv [++i], "%79[^,],%u", name, &count);
+
+                /* For now, only implemented for mode-4 */
+                switch (target)
+                {
+                    case VDP_MODE_4:
+                    case VDP_MODE_4_SPRITES:
+                        mode4_reserve_patterns (name, count);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else if (strcmp (argv [i], "--panels") == 0)
             {
                 unsigned int width, height, count;
                 sscanf (argv [++i], "%ux%u,%u", &width, &height, &count);

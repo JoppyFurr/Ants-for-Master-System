@@ -5,7 +5,7 @@ Sneptile is a tool for converting images into tile data for the Sega Master Syst
 Input images should have a width and height that are multiples of 8px.
 Tiles are generated left-to-right, top-to-bottom, first file to last file.
 
-Usage: `./Sneptile [--mode-0] --output tile_data --palette 0x04 0x19 empty.png cursor.png`
+Usage: `./Sneptile [--mode-0] --output tile_data --palette 0x04 0x19 [--reserve name,count] empty.png cursor.png`
 
  * `--mode-0`: Generate Mode-0 tiles.
  * `--mode-2`: Generate Mode-2 tiles.
@@ -15,7 +15,8 @@ Usage: `./Sneptile [--mode-0] --output tile_data --palette 0x04 0x19 empty.png c
  * `--de-duplicate`: Within an input file, don't generate the same pattern twice.
  * `--output <dir>`: specifies the directory for the generated files
  * `--palette <0x...>`: specifies the first n entries of the palette
- * `--panels wxh,n`: Per-image, describes <n> panels of size <w> x <h> tiles. Mode-4 only, and depends on de-duplication.
+ * `--reserve <name,n>`: Reserve <n> patterns before the next sheet (eg, for runtime generated patterns).
+ * `--panels <wxh,n>`: Per-image, describes <n> panels of size <w> x <h> tiles. Mode-4 only, and depends on de-duplication.
  * `... <.png>`: the remaining parameters are `.png` images to generate tiles from
 
 The following three files are generated in the specified output directory:
