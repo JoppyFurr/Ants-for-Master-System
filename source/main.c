@@ -254,6 +254,10 @@ void main (void)
     sram_load ();
     rng_seed ();
 
+    /* Draw player indicator */
+    SMS_loadTileMapArea (0, 1, panel_player [0], 4, 2);
+    SMS_loadTileMapArea (28, 1, panel_player [1], 4, 2);
+
     /* Draw / discard area */
     render_card_as_tile (12, 0, CARD_BACK);
     render_card_as_tile (16, 0, CARD_RESERVE);

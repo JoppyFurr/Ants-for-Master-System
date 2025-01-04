@@ -35,6 +35,8 @@ build_ants_for_master_system ()
         $sneptile --sprites --de-duplicate --output tile_data --palette 0x00 --output tile_data \
             tiles/empty.png \
             --reserve card_sprite,24 \
+            --panels 4x2,2 \
+            tiles/player.png \
             --panels 4x6,31 \
             tiles/cards.png
     )
