@@ -154,16 +154,16 @@ void card_slide_to (uint16_t end_x, uint16_t end_y)
     uint16_t x;
     uint16_t y;
 
-    x = slide_start_x << 4;
-    y = slide_start_y << 4;
+    x = slide_start_x << 5;
+    y = slide_start_y << 5;
 
-    for (uint8_t frame = 0; frame < 16; frame++)
+    for (uint8_t frame = 0; frame < 32; frame++)
     {
         x += end_x - slide_start_x;
         y += end_y - slide_start_y;
 
         SMS_initSprites ();
-        render_card_as_sprite (x >> 4, y >> 4);
+        render_card_as_sprite (x >> 5, y >> 5);
 
         /* Write the new sprite position only during vblank. */
         SMS_waitForVBlank ();
