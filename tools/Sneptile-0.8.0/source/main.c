@@ -15,6 +15,7 @@
  *    -> For mode-0, consider sorting the tiles by colours first as a pre-processing step
  *    -> Consider an external configuration file to describe panels within images.
  *       -> If present could also contain the file names instead of as parameters.
+ *  - Configuration file instead of ever-growing parameters?
  */
 
 #include <stdbool.h>
@@ -40,10 +41,13 @@ image_t current_image;
 void* unique_tiles [512];
 uint32_t unique_tiles_count = 0;
 
-/* Panes */
+/* Panels */
 uint32_t panel_width = 0;
 uint32_t panel_height = 0;
 uint32_t panel_count = 0;
+
+/* Per-image settings */
+bool use_background_palette = false;
 
 
 /*
@@ -146,7 +150,8 @@ static int sneptile_process_image (pixel_t *buffer, char *name)
                     break;
                 case VDP_MODE_4:
                 case VDP_MODE_4_SPRITES:
-                    mode4_process_tile (&buffer [row * current_image.width + col]);
+                    mode4_process_tile ((use_background_palette) ? PALETTE_BACKGROUND : PALETTE_SPRITE,
+                                        &buffer [row * current_image.width + col]);
                     break;
                 default:
                     break;
@@ -160,7 +165,7 @@ static int sneptile_process_image (pixel_t *buffer, char *name)
         {
             case VDP_MODE_4:
             case VDP_MODE_4_SPRITES:
-                mode4_process_panels (name, panel_count, panel_width, panel_height, buffer);
+                mode4_process_panels (name, (use_background_palette) ? PALETTE_BACKGROUND : PALETTE_SPRITE, panel_count, panel_width, panel_height, buffer);
             default:
                 break;
         }
@@ -284,6 +289,7 @@ int main (int argc, char **argv)
         fprintf (stderr, "    --palette <0x00 0x01..> : Pre-defined palette entries.\n");
         fprintf (stderr, "  Per-sheet options:\n");
         fprintf (stderr, "    --reserve <name,n> : Reserve <n> patterns before the next sheet (eg, for runtime generated patterns)\n");
+        fprintf (stderr, "    --background : The next sheet should use the background palette instead of the sprite palette (mode-4)\n");
         fprintf (stderr, "    --panels <wxh,n> : The following sheet contains <n> panels of size <w> x <h>. Depends on de-duplication.\n");
         return EXIT_FAILURE;
     }
@@ -346,7 +352,8 @@ int main (int argc, char **argv)
             {
                 if (strncmp (argv [0], "0x", 2) == 0 && strlen (argv[0]) == 4)
                 {
-                    mode4_palette_add_colour (strtol (argv [0], NULL, 16));
+                    /* Note: For now this option assumes the sprite palette */
+                    mode4_palette_add_colour (PALETTE_SPRITE, strtol (argv [0], NULL, 16));
                 }
                 else
                 {
@@ -405,6 +412,10 @@ int main (int argc, char **argv)
                         break;
                 }
             }
+            else if (strcmp (argv [i], "--background") == 0)
+            {
+                use_background_palette = true;
+            }
             else if (strcmp (argv [i], "--panels") == 0)
             {
                 unsigned int width, height, count;
@@ -421,8 +432,9 @@ int main (int argc, char **argv)
                     break;
                 }
 
-                /* Panel setting is only valid per-image */
+                /* Restore per-image settings back to their defaults */
                 panel_count = 0;
+                use_background_palette = false;
             }
         }
     }

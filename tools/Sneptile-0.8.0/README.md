@@ -16,6 +16,7 @@ Usage: `./Sneptile [--mode-0] --output tile_data --palette 0x04 0x19 [--reserve 
  * `--output <dir>`: specifies the directory for the generated files
  * `--palette <0x...>`: specifies the first n entries of the palette
  * `--reserve <name,n>`: Reserve <n> patterns before the next sheet (eg, for runtime generated patterns).
+ * `--background`: The next sheet should use the background palette instead of the default sprite palette (mode-4)
  * `--panels <wxh,n>`: Per-image, describes <n> panels of size <w> x <h> tiles. Mode-4 only, and depends on de-duplication.
  * `... <.png>`: the remaining parameters are `.png` images to generate tiles from
 
@@ -83,13 +84,19 @@ will generate the following pattern_index.h:
 #define PATTERN_EMPTY 0
 #define PATTERN_CARDS 1
 uint16_t panel_cards [31] [24] = {
-    {   1,   2,   3,   4,  13,  14,  15,  16,  13,  46,  46,  16,  67,  68,  69,  70, 100, 101, 101, 102, 112, 113, 113, 114 },
-    {   1,   2,   3,   4,  13,  17,  18,  16,  13,  46,  46,  16,  71,  72,  73,  74, 100, 101, 101, 102, 112, 113, 113, 114 },
+    { 0x0829, 0x082a, 0x082b, 0x082c, 0x0835, 0x0836, 0x0837, 0x0838, 0x0835, 0x0856, 0x0856, 0x0838,
+      0x086b, 0x086c, 0x086d, 0x086e, 0x088c, 0x088d, 0x088d, 0x088e, 0x0898, 0x0899, 0x0899, 0x089a },
+    { 0x0829, 0x082a, 0x082b, 0x082c, 0x0835, 0x0839, 0x083a, 0x0838, 0x0835, 0x0856, 0x0856, 0x0838,
+      0x086f, 0x0870, 0x0871, 0x0872, 0x088c, 0x088d, 0x088d, 0x088e, 0x0898, 0x0899, 0x0899, 0x089a },
     ...
-    { 194, 195, 199, 202, 207, 223, 224, 210, 240, 243, 244, 210, 259, 260, 261, 262, 240, 276, 277, 210, 278, 279, 279, 280 },
-    { 281, 282, 283, 284, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305 }
+    { 0x08ea, 0x08eb, 0x08ef, 0x08f2, 0x08f7, 0x0907, 0x0908, 0x08fa, 0x0918, 0x091b, 0x091c, 0x08fa,
+      0x092b, 0x092c, 0x092d, 0x092e, 0x0918, 0x093c, 0x093d, 0x08fa, 0x093e, 0x093f, 0x093f, 0x0940 },
+    { 0x0941, 0x0942, 0x0943, 0x0944, 0x0946, 0x0947, 0x0948, 0x0949, 0x094a, 0x094b, 0x094c, 0x094d,
+      0x094e, 0x094f, 0x0950, 0x0951, 0x0952, 0x0953, 0x0954, 0x0955, 0x0956, 0x0957, 0x0958, 0x0959 }
 };
 ```
+
+Bit 11 indicates that the sprite palette is being used (default).
 
 Note that, for now: --panels will only work when using mode-4 and de-duplication.
 
