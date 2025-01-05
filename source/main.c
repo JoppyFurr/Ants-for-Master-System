@@ -238,8 +238,8 @@ void delay_frames (uint8_t frames)
 void main (void)
 {
     /* Setup */
-    SMS_loadBGPalette (palette);
-    SMS_loadSpritePalette (palette);
+    SMS_loadBGPalette (background_palette);
+    SMS_loadSpritePalette (sprite_palette);
     SMS_setBackdropColor (0);
 
     SMS_loadTiles (patterns, 0, sizeof (patterns));
@@ -257,6 +257,10 @@ void main (void)
     /* Draw player indicator */
     SMS_loadTileMapArea (0, 1, panel_player [0], 4, 2);
     SMS_loadTileMapArea (28, 1, panel_player [1], 4, 2);
+
+    /* Draw side panels */
+    SMS_loadTileMapArea (0, 3, panel_panel [0], 4, 14);
+    SMS_loadTileMapArea (28, 3, panel_panel [0], 4, 14);
 
     /* Draw / discard area */
     render_card_as_tile (12, 0, CARD_BACK);
