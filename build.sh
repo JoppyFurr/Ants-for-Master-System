@@ -37,7 +37,9 @@ build_ants_for_master_system ()
             --reserve card_sprite,24 \
             --panels 4x2,2 tiles/player.png \
             --panels 4x6,31 tiles/cards.png \
-            --panels 4x14,1 --background tiles/panel.png
+            --panels 4x14,1 --background tiles/panel.png \
+            --reserve panel_digits,32
+
     )
 
     mkdir -p build

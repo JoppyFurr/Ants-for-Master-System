@@ -15,6 +15,7 @@
 #include "../tile_data/palette.h"
 #include "../tile_data/patterns.h"
 #include "../tile_data/pattern_index.h"
+#include "digits.h"
 
 #include "cards.h"
 #include "save.h"
@@ -32,6 +33,25 @@
 #define DISCARD_Y_TILE 0
 #define DISCARD_X_SPRITE 128
 #define DISCARD_Y_SPRITE 0
+
+typedef enum field_e {
+    P1_BUILDERS = 0,
+    P1_BRICKS,
+    P1_SOLDIERS,
+    P1_WEAPONS,
+    P1_MAGI,
+    P1_CRYSTALS,
+    P1_CASTLE,
+    P1_FENCE,
+    P2_BUILDERS,
+    P2_BRICKS,
+    P2_SOLDIERS,
+    P2_WEAPONS,
+    P2_MAGI,
+    P2_CRYSTALS,
+    P2_CASTLE,
+    P2_FENCE
+} field_t;
 
 /* Hands */
 card_t hand_1 [8] = { 0 };
@@ -233,6 +253,105 @@ void delay_frames (uint8_t frames)
 
 
 /*
+ * Initialise the side-panel.
+ */
+void panel_init (void)
+{
+    const uint8_t y_positions [8] = { 4, 5, 7, 8, 10, 11, 14, 15 };
+
+    /* Copy tilemap from image */
+    SMS_loadTileMapArea (0, 3, panel_panel [0], 4, 14);
+    SMS_loadTileMapArea (28, 3, panel_panel [0], 4, 14);
+
+    /* Set up panel digit areas */
+    for (uint8_t i = 0; i < 16; i++)
+    {
+        /* Eight digit areas for each player */
+        uint8_t x = (i < 8) ? 2 : 30;
+        uint8_t y = y_positions [i & 0x07];
+
+        uint16_t area [2] = { PATTERN_PANEL_DIGITS + (i << 1), PATTERN_PANEL_DIGITS + (i << 1) + 1 };
+        SMS_loadTileMapArea (x, y, area, 2, 1);
+    }
+}
+
+
+/*
+ * Update a side-panel value.
+ */
+void panel_update (field_t field, uint16_t value)
+{
+    /* A pair of buffers to hold the two patterns we will draw into */
+    uint8_t buffer_l [32];
+    uint8_t buffer_r [32];
+
+    /* Separate the digits. Assume a maximum value of 999. */
+    uint8_t digit_0 = value % 10;           /* Ones */
+    uint8_t digit_1 = (value % 100) / 10;   /* Tens */
+    uint8_t digit_2 = value / 100;          /* Hundreds */
+
+    /* Within each panel-box, the digit for the top
+     * field is one pixel higher within its tile */
+    uint8_t y_offset = (field & 0x01) ? 2 : 1;
+
+    /* TODO: Bake text colours into background palette */
+    /* Currently, Yellow (15) is missing as it's not in the image.
+     *            White (63) happens to be at index 10 */
+    const uint8_t colour_index = 10; /* White */
+
+    /* Start by populating the pattern buffer with the panel background tiles */
+    const uint8_t field_backgrounds [8] = { 6, 10, 18, 22, 30, 34, 46, 50 };
+    memcpy (buffer_l,  &patterns [panel_panel [0] [field_backgrounds [field & 0x07] + 0] << 3], 32);
+    memcpy (buffer_r, &patterns [panel_panel [0] [field_backgrounds [field & 0x07] + 1] << 3], 32);
+
+    /* Draw the font into the pattern */
+    for (uint8_t line = 0; line < 5; line++)
+    {
+        uint8_t font_line_l = 0;
+        uint8_t font_line_r = 0;
+
+        /* One digit */
+        if (value <= 9)
+        {
+            font_line_l = digit_font [digit_0] [line];
+        }
+        /* Two digits */
+        else if (value <= 99)
+        {
+            font_line_l = (digit_font [digit_1] [line] << 2) | (digit_font [digit_0] [line] >> 2);
+            font_line_r = (digit_font [digit_0] [line] << 6);
+
+        }
+        /* Three digits */
+        else
+        {
+            font_line_l = (digit_font [digit_2] [line] << 4) | (digit_font [digit_1] [line]);
+            font_line_r = digit_font [digit_0] [line]  << 4;
+
+        }
+
+        for (uint8_t bitplane = 0; bitplane < 4; bitplane++)
+        {
+            buffer_l [(line + y_offset) * 4 + bitplane] &= ~font_line_l;
+            buffer_r [(line + y_offset) * 4 + bitplane] &= ~font_line_r;
+
+            if (colour_index & (1 << bitplane))
+            {
+                buffer_l [(line + y_offset) * 4 + bitplane] |=  font_line_l;
+                buffer_r [(line + y_offset) * 4 + bitplane] |=  font_line_r;
+            }
+        }
+    }
+
+    /* TODO: Consider waiting for vsync before writing to VRAM.
+     *       In some cases however (eg, curse) we will update all 16 fields
+     *       at once and may want them to share a vsync if possible.. */
+    SMS_loadTiles (buffer_l, PATTERN_PANEL_DIGITS + (field << 1),     sizeof (buffer_l));
+    SMS_loadTiles (buffer_r, PATTERN_PANEL_DIGITS + (field << 1) + 1, sizeof (buffer_r));
+}
+
+
+/*
  * Entry point.
  */
 void main (void)
@@ -258,9 +377,24 @@ void main (void)
     SMS_loadTileMapArea (0, 1, panel_player [0], 4, 2);
     SMS_loadTileMapArea (28, 1, panel_player [1], 4, 2);
 
-    /* Draw side panels */
-    SMS_loadTileMapArea (0, 3, panel_panel [0], 4, 14);
-    SMS_loadTileMapArea (28, 3, panel_panel [0], 4, 14);
+    /* Initialise side panels */
+    panel_init ();
+    panel_update (P1_BUILDERS, 2);
+    panel_update (P1_BRICKS,   5);
+    panel_update (P1_SOLDIERS, 2);
+    panel_update (P1_WEAPONS,  5);
+    panel_update (P1_MAGI,     2);
+    panel_update (P1_CRYSTALS, 5);
+    panel_update (P1_CASTLE,  30);
+    panel_update (P1_FENCE,   10);
+    panel_update (P2_BUILDERS, 2);
+    panel_update (P2_BRICKS,   5);
+    panel_update (P2_SOLDIERS, 2);
+    panel_update (P2_WEAPONS,  5);
+    panel_update (P2_MAGI,     2);
+    panel_update (P2_CRYSTALS, 5);
+    panel_update (P2_CASTLE,  10);
+    panel_update (P2_FENCE,   30);
 
     /* Draw / discard area */
     render_card_as_tile (12, 0, CARD_BACK);
