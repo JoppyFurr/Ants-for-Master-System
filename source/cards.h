@@ -39,7 +39,8 @@ typedef enum card_e
     CARD_PIXIES,
     CARD_CURSE,
 
-    CARD_BACK
+    CARD_BACK,
+    CARD_NONE
 } card_t;
 
 typedef enum card_type_e

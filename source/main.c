@@ -53,8 +53,9 @@ typedef enum field_e {
     P2_FENCE
 } field_t;
 
-/* Hands */
-card_t hand_1 [8] = { 0 };
+/* Game State */
+uint8_t player = 0;
+card_t hands [2] [8];
 
 /* Reserved patterns for card sprite use */
 static const uint8_t card_sprite [24] =  {
@@ -209,13 +210,18 @@ void card_slide_done (void)
 /*
  * Draw a card and place it into the active player's hand.
  */
-void draw_card (uint8_t slot)
+void draw_card (uint8_t slot, bool hidden)
 {
     /* Deal */
     card_t card = rand () % 30;
-    hand_1 [slot] = card;
+    hands [player] [slot] = card;
 
     /* Animate */
+    if (hidden)
+    {
+        card = CARD_BACK;
+    }
+
     card_slide_from (DRAW_X_SPRITE, DRAW_Y_SPRITE, card);
     card_slide_to (slot << 5, HAND_Y_SPRITE);
     render_card_as_tile (slot << 2, HAND_Y_TILE, card);
@@ -228,7 +234,7 @@ void draw_card (uint8_t slot)
  */
 void play_card (uint8_t slot)
 {
-    card_t card = hand_1 [slot];
+    card_t card = hands [player] [slot];
 
     /* Animate */
     card_slide_from (slot << 5, HAND_Y_SPRITE, card);
@@ -352,6 +358,33 @@ void panel_update (field_t field, uint16_t value)
 
 
 /*
+ * Change the current player.
+ */
+void set_player (uint8_t p)
+{
+    player = p;
+    card_t *hand = hands [player];
+
+    /* Show the new player's hand */
+    for (uint8_t slot = 0; slot < 8; slot++)
+    {
+        if (hand [slot] == CARD_NONE)
+        {
+            clear_card_from_tile (slot << 2, HAND_Y_TILE);
+        }
+        else if (player == 0)
+        {
+            render_card_as_tile (slot << 2, HAND_Y_TILE, hand [slot]);
+        }
+        else
+        {
+            render_card_as_tile (slot << 2, HAND_Y_TILE, CARD_BACK);
+        }
+    }
+}
+
+
+/*
  * Entry point.
  */
 void main (void)
@@ -400,21 +433,38 @@ void main (void)
     render_card_as_tile (12, 0, CARD_BACK);
     render_card_as_tile (16, 0, CARD_RESERVE);
 
-    /* Deal initial hand */
+    /* Clear hands */
+    memset (hands [0], CARD_NONE, sizeof (hands [0]));
+    memset (hands [1], CARD_NONE, sizeof (hands [1]));
+
+    /* Deal Player 1 */
+    set_player (0);
     for (uint8_t i = 0; i < 8; i++)
     {
-        draw_card (i);
+        draw_card (i, false);
     }
+    delay_frames (60);
+
+    /* Deal Player 2 */
+    set_player (1);
+    for (uint8_t i = 0; i < 8; i++)
+    {
+        draw_card (i, true);
+    }
+    delay_frames (60);
 
     while (1)
     {
-        uint8_t move = rand () & 0x07;
-
+        /* Change player */
+        set_player (!player);
         delay_frames (60);
-        play_card (move);
 
+        uint8_t move = rand () & 0x07;
+        play_card (move);
         delay_frames (30);
-        draw_card (move);
+
+        draw_card (move, (player == 1));
+        delay_frames (30);
     }
 }
 
