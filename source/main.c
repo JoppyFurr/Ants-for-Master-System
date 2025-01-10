@@ -365,6 +365,10 @@ void set_player (uint8_t p)
     player = p;
     card_t *hand = hands [player];
 
+    /* Player indicator */
+    SMS_loadTileMapArea ( 0, 1, panel_player [0 | (player == 0 ? 2 : 0)], 4, 2);
+    SMS_loadTileMapArea (28, 1, panel_player [1 | (player == 1 ? 2 : 0)], 4, 2);
+
     /* Show the new player's hand */
     for (uint8_t slot = 0; slot < 8; slot++)
     {
@@ -407,7 +411,7 @@ void main (void)
     rng_seed ();
 
     /* Draw player indicator */
-    SMS_loadTileMapArea (0, 1, panel_player [0], 4, 2);
+    SMS_loadTileMapArea (0, 1, panel_player [2], 4, 2);
     SMS_loadTileMapArea (28, 1, panel_player [1], 4, 2);
 
     /* Initialise side panels */
