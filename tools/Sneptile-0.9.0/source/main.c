@@ -16,6 +16,7 @@
  *    -> Consider an external configuration file to describe panels within images.
  *       -> If present could also contain the file names instead of as parameters.
  *  - Configuration file instead of ever-growing parameters?
+ *  - De-tangle "--sprites", making it per-sheet. Background patterns should be able to use index 0.
  */
 
 #include <stdbool.h>
@@ -281,12 +282,14 @@ int main (int argc, char **argv)
         fprintf (stderr, "  Global options:\n");
         fprintf (stderr, "    --mode-0 : Generate TMS99xx mode-0 patterns\n");
         fprintf (stderr, "    --mode-2 : Generate TMS99xx mode-2 patterns\n");
-        fprintf (stderr, "    --sprites : Mode-4 sprites. Index 0 will not be used for visible colours.\n");
         fprintf (stderr, "    --tms-small-sprites : Generate TMS99xx sprite patterns (8x8)\n");
         fprintf (stderr, "    --tms-large-sprites : Generate TMS99xx sprite patterns (16x16)\n");
         fprintf (stderr, "    --de-duplicate : Within an input file, don't generate the same pattern twice\n");
         fprintf (stderr, "    --output <dir> : Specify output directory\n");
-        fprintf (stderr, "    --palette <0x00 0x01..> : Pre-defined palette entries.\n");
+        fprintf (stderr, "  Mode-4 options:\n");
+        fprintf (stderr, "    --sprite-palette <0x00 0x01..> : Pre-defined palette entries for the sprite palette.\n");
+        fprintf (stderr, "    --background-palette <0x00 0x01..> : Pre-defined palette entries for the background palette.\n");
+        fprintf (stderr, "    --sprites : Don't use index 0 for visible colours.\n");
         fprintf (stderr, "  Per-sheet options:\n");
         fprintf (stderr, "    --reserve <name,n> : Reserve <n> patterns before the next sheet (eg, for runtime generated patterns)\n");
         fprintf (stderr, "    --background : The next sheet should use the background palette instead of the sprite palette (mode-4)\n");
@@ -346,14 +349,27 @@ int main (int argc, char **argv)
             argv += 1;
             argc -= 1;
         }
-        else if (strcmp (argv [0], "--palette") == 0)
+        else if (strcmp (argv [0], "--sprite-palette") == 0)
         {
             while (++argv, --argc)
             {
                 if (strncmp (argv [0], "0x", 2) == 0 && strlen (argv[0]) == 4)
                 {
-                    /* Note: For now this option assumes the sprite palette */
                     mode4_palette_add_colour (PALETTE_SPRITE, strtol (argv [0], NULL, 16));
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+        else if (strcmp (argv [0], "--background-palette") == 0)
+        {
+            while (++argv, --argc)
+            {
+                if (strncmp (argv [0], "0x", 2) == 0 && strlen (argv[0]) == 4)
+                {
+                    mode4_palette_add_colour (PALETTE_BACKGROUND, strtol (argv [0], NULL, 16));
                 }
                 else
                 {

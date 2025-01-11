@@ -14,7 +14,8 @@ Usage: `./Sneptile [--mode-0] --output tile_data --palette 0x04 0x19 [--reserve 
  * `--sprites`: Mode-4 sprites. Index 0 will not be used for visible colours.
  * `--de-duplicate`: Within an input file, don't generate the same pattern twice.
  * `--output <dir>`: specifies the directory for the generated files
- * `--palette <0x...>`: specifies the first n entries of the palette
+ * `--sprite-palette <0x...>`: specifies the first n entries of the mode-4 sprite palette
+ * `--background-palette <0x...>`: specifies the first n entries of the mode-4 background palette
  * `--reserve <name,n>`: Reserve <n> patterns before the next sheet (eg, for runtime generated patterns).
  * `--background`: The next sheet should use the background palette instead of the default sprite palette (mode-4)
  * `--panels <wxh,n>`: Per-image, describes <n> panels of size <w> x <h> tiles. Mode-4 only, and depends on de-duplication.
@@ -73,7 +74,7 @@ be generated in pattern_index.h.
 An example showing two files.
 The first file containing a single tile, the second containing 31 playing card panels:
 ```
-./Sneptile --de-duplicate --sprites --palette 0x00 \
+./Sneptile --de-duplicate --sprites --sprite-palette 0x00 \
     tiles/empty.png \
     --panels 4x6,31 \
     tiles/cards.png
