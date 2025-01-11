@@ -24,7 +24,7 @@ extern void card_slide_to (uint16_t end_x, uint16_t end_y);
 extern void card_slide_done (void);
 extern void render_card_as_tile (uint8_t x, uint8_t y, card_t card);
 extern void panel_init (void);
-extern void panel_update (field_t field);
+extern void panel_update (void);
 extern void delay_frames (uint8_t frames);
 
 /* Game State */
@@ -124,19 +124,15 @@ void generate_resources (void)
         resources [P1_BRICKS]   += resources [P1_BUILDERS];
         resources [P1_WEAPONS]  += resources [P1_SOLDIERS];
         resources [P1_CRYSTALS] += resources [P1_MAGI];
-        panel_update (P1_BRICKS);
-        panel_update (P1_WEAPONS);
-        panel_update (P1_CRYSTALS);
     }
     else
     {
         resources [P2_BRICKS]   += resources [P2_BUILDERS];
         resources [P2_WEAPONS]  += resources [P2_SOLDIERS];
         resources [P2_CRYSTALS] += resources [P2_MAGI];
-        panel_update (P2_BRICKS);
-        panel_update (P2_WEAPONS);
-        panel_update (P2_CRYSTALS);
     }
+
+    panel_update ();
 }
 
 
@@ -153,10 +149,7 @@ void game_start (void)
 
     /* Draw side panels */
     panel_init ();
-    for (uint8_t field = 0; field < FIELD_MAX; field++)
-    {
-        panel_update (field);
-    }
+    panel_update ();
 
     /* Draw / discard area */
     render_card_as_tile (12, 0, CARD_BACK);

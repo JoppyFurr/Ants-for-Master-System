@@ -212,81 +212,91 @@ void panel_init (void)
 
 
 /*
- * Update a side-panel value.
- * TODO: Consider caching values and automatically updating all that
- *       have changed rather than requiring a 'field' parameter.
+ * Update the side-panel values.
  */
-void panel_update (field_t field)
+void panel_update (void)
 {
-    uint16_t value = resources [field];
+    static uint16_t cache [16] = { 0 };
+    const uint8_t field_backgrounds [8] = { 6, 10, 18, 22, 30, 34, 46, 50 };
 
-    /* A pair of buffers to hold the two patterns we will draw into */
+    /* A pair of buffers to hold the patterns we will draw into */
     uint8_t buffer_l [32];
     uint8_t buffer_r [32];
 
-    /* Separate the digits. Assume a maximum value of 999. */
-    uint8_t digit_0 = value % 10;           /* Ones */
-    uint8_t digit_1 = (value % 100) / 10;   /* Tens */
-    uint8_t digit_2 = value / 100;          /* Hundreds */
-
-    /* Within each panel-box, the digit for the top
-     * field is one pixel higher within its tile */
-    uint8_t y_offset = (field & 0x01) ? 2 : 1;
-
-    /* TODO: Bake text colours into background palette */
-    /* Currently, Yellow (15) is missing as it's not in the image.
-     *            White (63) happens to be at index 10 */
-    const uint8_t colour_index = 10; /* White */
-
-    /* Start by populating the pattern buffer with the panel background tiles */
-    const uint8_t field_backgrounds [8] = { 6, 10, 18, 22, 30, 34, 46, 50 };
-    memcpy (buffer_l,  &patterns [panel_panel [0] [field_backgrounds [field & 0x07] + 0] << 3], 32);
-    memcpy (buffer_r, &patterns [panel_panel [0] [field_backgrounds [field & 0x07] + 1] << 3], 32);
-
-    /* Draw the font into the pattern */
-    for (uint8_t line = 0; line < 5; line++)
+    for (uint8_t field = 0; field < FIELD_MAX; field++)
     {
-        uint8_t font_line_l = 0;
-        uint8_t font_line_r = 0;
+        const uint16_t value = resources [field];
 
-        /* One digit */
-        if (value <= 9)
+        /* Skip fields that have not changed */
+        if (value == cache [field])
         {
-            font_line_l = digit_font [digit_0] [line];
-        }
-        /* Two digits */
-        else if (value <= 99)
-        {
-            font_line_l = (digit_font [digit_1] [line] << 2) | (digit_font [digit_0] [line] >> 2);
-            font_line_r = (digit_font [digit_0] [line] << 6);
-
-        }
-        /* Three digits */
-        else
-        {
-            font_line_l = (digit_font [digit_2] [line] << 4) | (digit_font [digit_1] [line]);
-            font_line_r = digit_font [digit_0] [line]  << 4;
-
+            continue;
         }
 
-        for (uint8_t bitplane = 0; bitplane < 4; bitplane++)
-        {
-            buffer_l [(line + y_offset) * 4 + bitplane] &= ~font_line_l;
-            buffer_r [(line + y_offset) * 4 + bitplane] &= ~font_line_r;
+        /* Separate the digits. Assume a maximum value of 999. */
+        const uint8_t digit_0 = value % 10;           /* Ones */
+        const uint8_t digit_1 = (value % 100) / 10;   /* Tens */
+        const uint8_t digit_2 = value / 100;          /* Hundreds */
 
-            if (colour_index & (1 << bitplane))
+        /* Within each panel-box, the digit for the top
+         * field is one pixel higher within its tile */
+        const uint8_t y_offset = (field & 0x01) ? 2 : 1;
+
+        /* TODO: Bake text colours into background palette */
+        /* Currently, Yellow (15) is missing as it's not in the image.
+         *            White (63) happens to be at index 10 */
+        const uint8_t colour_index = 10; /* White */
+
+        /* Start by populating the pattern buffer with the panel background tiles */
+        memcpy (buffer_l,  &patterns [panel_panel [0] [field_backgrounds [field & 0x07] + 0] << 3], 32);
+        memcpy (buffer_r, &patterns [panel_panel [0] [field_backgrounds [field & 0x07] + 1] << 3], 32);
+
+        /* Draw the digit font into the pattern */
+        for (uint8_t line = 0; line < 5; line++)
+        {
+            uint8_t font_line_l = 0;
+            uint8_t font_line_r = 0;
+
+            /* One digit */
+            if (value <= 9)
             {
-                buffer_l [(line + y_offset) * 4 + bitplane] |=  font_line_l;
-                buffer_r [(line + y_offset) * 4 + bitplane] |=  font_line_r;
+                font_line_l = digit_font [digit_0] [line];
+            }
+            /* Two digits */
+            else if (value <= 99)
+            {
+                font_line_l = (digit_font [digit_1] [line] << 2) | (digit_font [digit_0] [line] >> 2);
+                font_line_r = (digit_font [digit_0] [line] << 6);
+
+            }
+            /* Three digits */
+            else
+            {
+                font_line_l = (digit_font [digit_2] [line] << 4) | (digit_font [digit_1] [line]);
+                font_line_r = digit_font [digit_0] [line]  << 4;
+
+            }
+
+            for (uint8_t bitplane = 0; bitplane < 4; bitplane++)
+            {
+                buffer_l [(line + y_offset) * 4 + bitplane] &= ~font_line_l;
+                buffer_r [(line + y_offset) * 4 + bitplane] &= ~font_line_r;
+
+                if (colour_index & (1 << bitplane))
+                {
+                    buffer_l [(line + y_offset) * 4 + bitplane] |=  font_line_l;
+                    buffer_r [(line + y_offset) * 4 + bitplane] |=  font_line_r;
+                }
             }
         }
+
+        /* TODO: Consider waiting for v-sync before writing to VRAM. This would need to
+         *       be done outside of the loop to allow all values to change simultaneously. */
+        SMS_loadTiles (buffer_l, PATTERN_PANEL_DIGITS + (field << 1),     sizeof (buffer_l));
+        SMS_loadTiles (buffer_r, PATTERN_PANEL_DIGITS + (field << 1) + 1, sizeof (buffer_r));
     }
 
-    /* TODO: Consider waiting for vsync before writing to VRAM.
-     *       In some cases however (eg, curse) we will update all 16 fields
-     *       at once and may want them to share a vsync if possible.. */
-    SMS_loadTiles (buffer_l, PATTERN_PANEL_DIGITS + (field << 1),     sizeof (buffer_l));
-    SMS_loadTiles (buffer_r, PATTERN_PANEL_DIGITS + (field << 1) + 1, sizeof (buffer_r));
+    memcpy (cache, resources, sizeof (cache));
 }
 
 
