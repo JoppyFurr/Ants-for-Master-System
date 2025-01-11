@@ -1,8 +1,24 @@
 /*
  * Ants for Master System
+ * An Ants clone for the Sega Master System
  *
  * Card enums and data
  */
+
+/* Card on-screen locations */
+#define HAND_Y_TILE 18
+#define HAND_Y_SPRITE 144
+
+#define DRAW_X_TILE 12
+#define DRAW_Y_TILE 0
+#define DRAW_X_SPRITE 96
+#define DRAW_Y_SPRITE 0
+
+#define DISCARD_X_TILE 16
+#define DISCARD_Y_TILE 0
+#define DISCARD_X_SPRITE 128
+#define DISCARD_Y_SPRITE 0
+
 
 typedef enum card_e
 {
