@@ -81,6 +81,16 @@ static const uint8_t card_sprite [24] =  {
     PATTERN_CARD_SPRITE + 20, PATTERN_CARD_SPRITE + 21, PATTERN_CARD_SPRITE + 22, PATTERN_CARD_SPRITE + 23
 };
 
+/* Empty card area */
+static const uint16_t empty_slot [24] = {
+    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
+    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
+    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
+    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
+    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
+    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY
+};
+
 /* Slide animation variables */
 uint16_t slide_start_x = 0;
 uint16_t slide_start_y = 0;
@@ -136,28 +146,18 @@ static inline void render_card_as_sprite (uint16_t x, uint16_t y)
 
 
 /*
- * Clear a card from the background.
- */
-static inline void clear_card_from_tile (uint8_t x, uint8_t y)
-{
-    uint16_t empty_slot [24] = {
-        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
-        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
-        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
-        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
-        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
-        PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY
-    };
-    SMS_loadTileMapArea (x, y, empty_slot, 4, 6);
-}
-
-
-/*
  * Render a card to the background.
  */
-static inline void render_card_as_tile (uint8_t x, uint8_t y, card_t card)
+static void render_card_as_tile (uint8_t x, uint8_t y, card_t card)
 {
-    SMS_loadTileMapArea (x, y, panel_cards [card], 4, 6);
+    if (card == CARD_NONE)
+    {
+        SMS_loadTileMapArea (x, y, empty_slot, 4, 6);
+    }
+    else
+    {
+        SMS_loadTileMapArea (x, y, panel_cards [card], 4, 6);
+    }
 }
 
 
@@ -252,7 +252,7 @@ void play_card (uint8_t slot)
 
     /* Animate */
     card_slide_from (slot << 5, HAND_Y_SPRITE, card);
-    clear_card_from_tile (slot << 2, HAND_Y_TILE);
+    render_card_as_tile (slot << 2, HAND_Y_TILE, CARD_NONE);
     card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE);
     render_card_as_tile (DISCARD_X_TILE, DISCARD_Y_TILE, card);
     card_slide_done ();
@@ -392,7 +392,7 @@ void set_player (uint8_t p)
     {
         if (hand [slot] == CARD_NONE)
         {
-            clear_card_from_tile (slot << 2, HAND_Y_TILE);
+            render_card_as_tile (slot << 2, HAND_Y_TILE, CARD_NONE);
         }
         else if (player == 0)
         {
