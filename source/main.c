@@ -22,7 +22,7 @@
 #include "rng.h"
 
 /* External variables */
-extern uint16_t resources [FIELD_MAX];
+extern uint16_t resources [2] [FIELD_MAX];
 
 /* Reserved patterns for card sprite use */
 static const uint8_t card_sprite [24] =  {
@@ -216,19 +216,21 @@ void panel_init (void)
  */
 void panel_update (void)
 {
-    static uint16_t cache [16] = { 0 };
+    static uint16_t cache [2] [FIELD_MAX] = { { 0 } };
     const uint8_t field_backgrounds [8] = { 6, 10, 18, 22, 30, 34, 46, 50 };
 
     /* A pair of buffers to hold the patterns we will draw into */
     uint8_t buffer_l [32];
     uint8_t buffer_r [32];
 
+
+    for (uint8_t player = 0; player < 2; player++)
     for (uint8_t field = 0; field < FIELD_MAX; field++)
     {
-        const uint16_t value = resources [field];
+        const uint16_t value = resources [player] [field];
 
         /* Skip fields that have not changed */
-        if (value == cache [field])
+        if (value == cache [player] [field])
         {
             continue;
         }
@@ -248,8 +250,8 @@ void panel_update (void)
         const uint8_t colour_index = 10; /* White */
 
         /* Start by populating the pattern buffer with the panel background tiles */
-        memcpy (buffer_l,  &patterns [panel_panel [0] [field_backgrounds [field & 0x07] + 0] << 3], 32);
-        memcpy (buffer_r, &patterns [panel_panel [0] [field_backgrounds [field & 0x07] + 1] << 3], 32);
+        memcpy (buffer_l,  &patterns [panel_panel [0] [field_backgrounds [field] + 0] << 3], 32);
+        memcpy (buffer_r, &patterns [panel_panel [0] [field_backgrounds [field] + 1] << 3], 32);
 
         /* Draw the digit font into the pattern */
         for (uint8_t line = 0; line < 5; line++)
@@ -292,11 +294,12 @@ void panel_update (void)
 
         /* TODO: Consider waiting for v-sync before writing to VRAM. This would need to
          *       be done outside of the loop to allow all values to change simultaneously. */
-        SMS_loadTiles (buffer_l, PATTERN_PANEL_DIGITS + (field << 1),     sizeof (buffer_l));
-        SMS_loadTiles (buffer_r, PATTERN_PANEL_DIGITS + (field << 1) + 1, sizeof (buffer_r));
+        SMS_loadTiles (buffer_l, PATTERN_PANEL_DIGITS + (player << 4) + (field << 1),     sizeof (buffer_l));
+        SMS_loadTiles (buffer_r, PATTERN_PANEL_DIGITS + (player << 4) + (field << 1) + 1, sizeof (buffer_r));
     }
 
-    memcpy (cache, resources, sizeof (cache));
+    memcpy (cache [0], resources [0], sizeof (cache [0]));
+    memcpy (cache [1], resources [1], sizeof (cache [1]));
 }
 
 

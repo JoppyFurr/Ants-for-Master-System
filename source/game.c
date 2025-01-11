@@ -12,6 +12,7 @@
 
 #include "SMSlib.h"
 
+#define INCLUDE_CARD_DATA
 #include "cards.h"
 #include "game.h"
 
@@ -30,25 +31,25 @@ extern void delay_frames (uint8_t frames);
 /* Game State */
 uint8_t player = 0;
 card_t hands [2] [8];
-uint16_t resources [FIELD_MAX];
+uint16_t resources [2] [FIELD_MAX];
 
 /* Starting resources */
 const uint16_t starting_resources [8] = {
-    [P1_BUILDERS] = 2,
-    [P1_BRICKS]   = 5,
-    [P1_SOLDIERS] = 2,
-    [P1_WEAPONS]  = 5,
-    [P1_MAGI]     = 2,
-    [P1_CRYSTALS] = 5,
-    [P1_CASTLE]   = 30,
-    [P1_FENCE]    = 10
+    [BUILDERS] = 2,
+    [BRICKS]   = 5,
+    [SOLDIERS] = 2,
+    [WEAPONS]  = 5,
+    [MAGI]     = 2,
+    [CRYSTALS] = 5,
+    [CASTLE]   = 30,
+    [FENCE]    = 10
 };
 
 
 /*
  * Draw a card and place it into the active player's hand.
  */
-void draw_card (uint8_t slot, bool hidden)
+static void draw_card (uint8_t slot, bool hidden)
 {
     /* Deal */
     card_t card = rand () % 30;
@@ -70,7 +71,35 @@ void draw_card (uint8_t slot, bool hidden)
 /*
  * Play a card from the active player's hand.
  */
-void play_card (uint8_t slot)
+static void play_card (uint8_t slot)
+{
+    card_t card = hands [player] [slot];
+
+    /* Subtract cost */
+    uint8_t cost_unit = card_data [card].cost_unit;
+    uint8_t card_cost = card_data [card].cost;
+    resources [player] [cost_unit] -= card_cost;
+    panel_update ();
+
+    /* Animate */
+    card_slide_from (slot << 5, HAND_Y_SPRITE, card);
+    render_card_as_tile (slot << 2, HAND_Y_TILE, CARD_NONE);
+    card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE);
+    render_card_as_tile (DISCARD_X_TILE, DISCARD_Y_TILE, card);
+    card_slide_done ();
+
+    /* TODO: Perform card action */
+}
+
+
+/*
+ * Discard a card from the active player's hand.
+ *
+ * TODO: Discarded cards should look different to played cards.
+ *       In the original Ants, the card is dim and has DISCARD
+ *       written in yellow over the card.
+ */
+static void discard_card (uint8_t slot)
 {
     card_t card = hands [player] [slot];
 
@@ -86,7 +115,7 @@ void play_card (uint8_t slot)
 /*
  * Change the current player.
  */
-void set_player (uint8_t p)
+static void set_player (uint8_t p)
 {
     player = p;
     card_t *hand = hands [player];
@@ -117,22 +146,25 @@ void set_player (uint8_t p)
 /*
  * Generate resources for the current player.
  */
-void generate_resources (void)
+static void generate_resources (void)
 {
-    if (player == 0)
-    {
-        resources [P1_BRICKS]   += resources [P1_BUILDERS];
-        resources [P1_WEAPONS]  += resources [P1_SOLDIERS];
-        resources [P1_CRYSTALS] += resources [P1_MAGI];
-    }
-    else
-    {
-        resources [P2_BRICKS]   += resources [P2_BUILDERS];
-        resources [P2_WEAPONS]  += resources [P2_SOLDIERS];
-        resources [P2_CRYSTALS] += resources [P2_MAGI];
-    }
+    resources [player] [BRICKS]   += resources [player] [BUILDERS];
+    resources [player] [WEAPONS]  += resources [player] [SOLDIERS];
+    resources [player] [CRYSTALS] += resources [player] [MAGI];
 
     panel_update ();
+}
+
+
+/*
+ * Check if the player can afford to play a card.
+ */
+static bool card_valid (card_t card)
+{
+    uint8_t cost_unit = card_data [card].cost_unit;
+    uint8_t card_cost = card_data [card].cost;
+
+    return (resources [player] [cost_unit] >= card_cost);
 }
 
 
@@ -144,8 +176,8 @@ void game_start (void)
     /* Clear hands and reset to starting resources */
     memset (hands [0], CARD_NONE, sizeof (hands [0]));
     memset (hands [1], CARD_NONE, sizeof (hands [1]));
-    memcpy (&resources [0], starting_resources, sizeof (starting_resources));
-    memcpy (&resources [8], starting_resources, sizeof (starting_resources));
+    memcpy (resources [0], starting_resources, sizeof (resources [0]));
+    memcpy (resources [1], starting_resources, sizeof (resources [1]));
 
     /* Draw side panels */
     panel_init ();
@@ -190,7 +222,14 @@ void game_start (void)
         delay_frames (60);
 
         uint8_t move = rand () & 0x07;
-        play_card (move);
+        if (card_valid (hands [player] [move]))
+        {
+            play_card (move);
+        }
+        else
+        {
+            discard_card (move);
+        }
         delay_frames (30);
 
         draw_card (move, (player == 1));
