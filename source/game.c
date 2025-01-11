@@ -34,6 +34,7 @@ extern void delay_frames (uint8_t frames);
 uint8_t player = 0;
 card_t hands [2] [8];
 uint16_t resources [2] [FIELD_MAX];
+uint8_t empty_slot = 0;
 
 /* Starting resources */
 const uint16_t starting_resources [8] = {
@@ -292,6 +293,7 @@ static void play_card (uint8_t slot)
     }
 
     panel_update ();
+    empty_slot = slot;
 }
 
 
@@ -312,6 +314,8 @@ static void discard_card (uint8_t slot)
     card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE);
     render_card_as_tile (DISCARD_X_TILE, DISCARD_Y_TILE, card);
     card_slide_done ();
+
+    empty_slot = slot;
 }
 
 
@@ -372,6 +376,61 @@ static bool card_valid (card_t card)
 
 
 /*
+ * Select a move for the current player.
+ * If the card can be afforded, it is to be played.
+ * If the card is too expensive, it is to be discarded.
+ */
+static void ai_move (void)
+{
+    uint8_t best_card = 0;
+    uint8_t best_score = 0;
+
+    /* Play the most expensive card, or increase production if possible */
+    for (uint8_t slot = 0; slot < 8; slot++)
+    {
+        card_t card = hands [player] [slot];
+
+        if (card_valid (card))
+        {
+            uint8_t test_score = card_data [card].cost;
+
+            if (card == CARD_SCHOOL || card == CARD_RECRUIT || card == CARD_SORCERER)
+            {
+                test_score = 100;
+            }
+
+            if (test_score > best_score)
+            {
+                best_card = slot;
+                best_score = test_score;
+            }
+        }
+    }
+
+    if (best_score)
+    {
+        play_card (best_card);
+    }
+    else
+    {
+        /* If there are no valid moves, discard the most expensive card */
+        for (uint8_t slot = 0; slot < 8; slot++)
+        {
+            card_t card = hands [player] [slot];
+
+            if (card_data [card].cost > best_score)
+            {
+                best_card = slot;
+                best_score = card_data [card].cost;
+            }
+        }
+
+        discard_card (best_card);
+    }
+}
+
+
+/*
  * Play one game of Ants.
  */
 void game_start (void)
@@ -424,18 +483,11 @@ void game_start (void)
         }
         delay_frames (60);
 
-        uint8_t move = rand () & 0x07;
-        if (card_valid (hands [player] [move]))
-        {
-            play_card (move);
-        }
-        else
-        {
-            discard_card (move);
-        }
+        /* For now both players are computers */
+        ai_move ();
         delay_frames (30);
 
-        draw_card (move, (player == 1));
+        draw_card (empty_slot, (player == 1));
         delay_frames (30);
 
         generate = true;
