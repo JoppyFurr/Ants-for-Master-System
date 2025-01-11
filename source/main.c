@@ -244,10 +244,11 @@ void panel_update (void)
          * field is one pixel higher within its tile */
         const uint8_t y_offset = (field & 0x01) ? 2 : 1;
 
-        /* TODO: Bake text colours into background palette */
-        /* Currently, Yellow (15) is missing as it's not in the image.
-         *            White (63) happens to be at index 10 */
-        const uint8_t colour_index = 10; /* White */
+        uint8_t colour_index = 1; /* White */
+        if (field == BUILDERS || field == SOLDIERS || field == MAGI)
+        {
+            colour_index = 2; /* Yellow */
+        }
 
         /* Start by populating the pattern buffer with the panel background tiles */
         memcpy (buffer_l,  &patterns [panel_panel [0] [field_backgrounds [field] + 0] << 3], 32);

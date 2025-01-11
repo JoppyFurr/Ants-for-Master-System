@@ -31,8 +31,12 @@ build_ants_for_master_system ()
     echo "  Generating tile data..."
     mkdir -p tile_data
     (
-        # Index 0 is used for transparency, use black, our background colour.
+        # Sprite palette [0] is black (background colour)
+        # Background palette [0] is black (background colour)
+        # Background palette [1] is white (digit printing)
+        # Background palette [2] is yellow (digit printing)
         $sneptile --sprites --de-duplicate --output tile_data --output tile_data \
+            --background-palette 0x00 0x3f 0x1f \
             --sprite-palette 0x00 \
             --background tiles/empty.png \
             --reserve card_sprite,24 \
