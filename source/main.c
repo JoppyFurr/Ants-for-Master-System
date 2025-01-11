@@ -50,12 +50,26 @@ typedef enum field_e {
     P2_MAGI,
     P2_CRYSTALS,
     P2_CASTLE,
-    P2_FENCE
+    P2_FENCE,
+    FIELD_MAX
 } field_t;
 
 /* Game State */
 uint8_t player = 0;
 card_t hands [2] [8];
+uint16_t resources [FIELD_MAX];
+
+/* Starting resources */
+const uint16_t starting_resources [8] = {
+    [P1_BUILDERS] = 2,
+    [P1_BRICKS]   = 5,
+    [P1_SOLDIERS] = 2,
+    [P1_WEAPONS]  = 5,
+    [P1_MAGI]     = 2,
+    [P1_CRYSTALS] = 5,
+    [P1_CASTLE]   = 30,
+    [P1_FENCE]    = 10
+};
 
 /* Reserved patterns for card sprite use */
 static const uint8_t card_sprite [24] =  {
@@ -284,9 +298,13 @@ void panel_init (void)
 
 /*
  * Update a side-panel value.
+ * TODO: Consider caching values and automatically updating all that
+ *       have changed rather than requiring a 'field' parameter.
  */
-void panel_update (field_t field, uint16_t value)
+void panel_update (field_t field)
 {
+    uint16_t value = resources [field];
+
     /* A pair of buffers to hold the two patterns we will draw into */
     uint8_t buffer_l [32];
     uint8_t buffer_r [32];
@@ -389,6 +407,32 @@ void set_player (uint8_t p)
 
 
 /*
+ * Generate resources for the current player.
+ */
+void generate_resources (void)
+{
+    if (player == 0)
+    {
+        resources [P1_BRICKS]   += resources [P1_BUILDERS];
+        resources [P1_WEAPONS]  += resources [P1_SOLDIERS];
+        resources [P1_CRYSTALS] += resources [P1_MAGI];
+        panel_update (P1_BRICKS);
+        panel_update (P1_WEAPONS);
+        panel_update (P1_CRYSTALS);
+    }
+    else
+    {
+        resources [P2_BRICKS]   += resources [P2_BUILDERS];
+        resources [P2_WEAPONS]  += resources [P2_SOLDIERS];
+        resources [P2_CRYSTALS] += resources [P2_MAGI];
+        panel_update (P2_BRICKS);
+        panel_update (P2_WEAPONS);
+        panel_update (P2_CRYSTALS);
+    }
+}
+
+
+/*
  * Entry point.
  */
 void main (void)
@@ -416,22 +460,12 @@ void main (void)
 
     /* Initialise side panels */
     panel_init ();
-    panel_update (P1_BUILDERS, 2);
-    panel_update (P1_BRICKS,   5);
-    panel_update (P1_SOLDIERS, 2);
-    panel_update (P1_WEAPONS,  5);
-    panel_update (P1_MAGI,     2);
-    panel_update (P1_CRYSTALS, 5);
-    panel_update (P1_CASTLE,  30);
-    panel_update (P1_FENCE,   10);
-    panel_update (P2_BUILDERS, 2);
-    panel_update (P2_BRICKS,   5);
-    panel_update (P2_SOLDIERS, 2);
-    panel_update (P2_WEAPONS,  5);
-    panel_update (P2_MAGI,     2);
-    panel_update (P2_CRYSTALS, 5);
-    panel_update (P2_CASTLE,  10);
-    panel_update (P2_FENCE,   30);
+    memcpy (&resources [0], starting_resources, sizeof (starting_resources));
+    memcpy (&resources [8], starting_resources, sizeof (starting_resources));
+    for (uint8_t field = 0; field < FIELD_MAX; field++)
+    {
+        panel_update (field);
+    }
 
     /* Draw / discard area */
     render_card_as_tile (12, 0, CARD_BACK);
@@ -457,10 +491,18 @@ void main (void)
     }
     delay_frames (60);
 
+    /* The player who starts does not generate
+     * resources as their first turn begins. */
+    bool generate = false;
+
     while (1)
     {
         /* Change player */
         set_player (!player);
+        if (generate)
+        {
+            generate_resources ();
+        }
         delay_frames (60);
 
         uint8_t move = rand () & 0x07;
@@ -469,6 +511,8 @@ void main (void)
 
         draw_card (move, (player == 1));
         delay_frames (30);
+
+        generate = true;
     }
 }
 
