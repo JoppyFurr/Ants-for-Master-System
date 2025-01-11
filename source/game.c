@@ -16,6 +16,8 @@
 #include "cards.h"
 #include "game.h"
 
+#define MIN(X,Y) (((X) < (Y)) ? X : Y)
+
 /* External data */
 extern uint16_t panel_player [4] [8];
 
@@ -69,6 +71,57 @@ static void draw_card (uint8_t slot, bool hidden)
 
 
 /*
+ * Add a resource to a player.
+ * A bound of 999 is used as this is what we can display.
+ */
+static void resource_add (uint16_t *resource, uint16_t count)
+{
+    *resource += count;
+    if (*resource > 999)
+    {
+        *resource = 999;
+    }
+}
+
+
+/*
+ * Subtract a resource from a player, enforcing a lower bound of zero.
+ */
+static void resource_subtract (uint16_t *resource, uint16_t count)
+{
+    if (*resource > count)
+    {
+        *resource -= count;
+    }
+    else
+    {
+        *resource = 0;
+    }
+}
+
+
+/*
+ * Attack the enemy.
+ */
+static void attack_enemy (uint16_t count)
+{
+    uint8_t enemy = !player;
+
+    /* The fence takes damage first */
+    if (resources [enemy] [FENCE] >= count)
+    {
+        resources [enemy] [FENCE] -= count;
+        return;
+    }
+
+    /* The castle takes damage once the fence has been destroyed */
+    count -= resources [enemy] [FENCE];
+    resources [enemy] [FENCE] = 0;
+    resource_subtract (&resources [enemy] [CASTLE], count);
+}
+
+
+/*
  * Play a card from the active player's hand.
  */
 static void play_card (uint8_t slot)
@@ -88,7 +141,157 @@ static void play_card (uint8_t slot)
     render_card_as_tile (DISCARD_X_TILE, DISCARD_Y_TILE, card);
     card_slide_done ();
 
-    /* TODO: Perform card action */
+    uint8_t enemy = !player;
+
+    switch (card)
+    {
+        case CARD_WALL:
+            resource_add (&resources [player] [FENCE], 3);
+            break;
+
+        case CARD_BASE:
+            resource_add (&resources [player] [CASTLE], 2);
+            break;
+
+        case CARD_DEFENCE:
+            resource_add (&resources [player] [FENCE], 6);
+            break;
+
+        case CARD_RESERVE:
+            resource_add (&resources [player] [CASTLE], 8);
+            resource_subtract (&resources [player] [FENCE], 4);
+            break;
+
+        case CARD_TOWER:
+            resource_add (&resources [player] [CASTLE], 5);
+            break;
+
+        case CARD_SCHOOL:
+            resource_add (&resources [player] [BUILDERS], 1);
+            break;
+
+        case CARD_WAIN:
+            resource_add (&resources [player] [CASTLE], 8);
+            resource_subtract (&resources [enemy] [CASTLE], 4);
+            break;
+
+        case CARD_FENCE:
+            resource_add (&resources [player] [FENCE], 22);
+            break;
+
+        case CARD_FORT:
+            resource_add (&resources [player] [CASTLE], 20);
+            break;
+
+        case CARD_BABYLON:
+            resource_add (&resources [player] [CASTLE], 32);
+            break;
+
+        case CARD_ARCHER:
+            attack_enemy (2);
+            break;
+
+        case CARD_KNIGHT:
+            attack_enemy (3);
+            break;
+
+        case CARD_RIDER:
+            attack_enemy (4);
+            break;
+
+        case CARD_PLATOON:
+            attack_enemy (6);
+            break;
+
+        case CARD_RECRUIT:
+            resource_add (&resources [player] [SOLDIERS], 1);
+            break;
+
+        case CARD_ATTACK:
+            attack_enemy (12);
+            break;
+
+        case CARD_SABOTEUR:
+            resource_subtract (&resources [enemy] [BRICKS], 4);
+            resource_subtract (&resources [enemy] [WEAPONS], 4);
+            resource_subtract (&resources [enemy] [CRYSTALS], 4);
+            break;
+
+        case CARD_THIEF:
+            resource_add (&resources [player] [BRICKS],   MIN (resources [enemy] [BRICKS], 5));
+            resource_add (&resources [player] [WEAPONS],  MIN (resources [enemy] [WEAPONS], 5));
+            resource_add (&resources [player] [CRYSTALS], MIN (resources [enemy] [CRYSTALS], 5));
+            resource_subtract (&resources [enemy] [BRICKS], 5);
+            resource_subtract (&resources [enemy] [WEAPONS], 5);
+            resource_subtract (&resources [enemy] [CRYSTALS], 5);
+            break;
+
+        case CARD_SWAT:
+            resource_subtract (&resources [enemy] [CASTLE], 10);
+            break;
+
+        case CARD_BANSHEE:
+            attack_enemy (32);
+            break;
+
+        case CARD_CONJURE_BRICKS:
+            resource_add (&resources [player] [BRICKS], 8);
+            break;
+
+        case CARD_CRUSH_BRICKS:
+            resource_subtract (&resources [enemy] [BRICKS], 8);
+            break;
+
+        case CARD_CONJURE_WEAPONS:
+            resource_add (&resources [player] [WEAPONS], 8);
+            break;
+
+        case CARD_CRUSH_WEAPONS:
+            resource_subtract (&resources [enemy] [WEAPONS], 8);
+            break;
+
+        case CARD_CONJURE_CRYSTALS:
+            resource_add (&resources [player] [CRYSTALS], 8);
+            break;
+
+        case CARD_CRUSH_CRYSTALS:
+            resource_subtract (&resources [enemy] [CRYSTALS], 8);
+            break;
+
+        case CARD_SORCERER:
+            resource_add (&resources [player] [MAGI], 1);
+            break;
+
+        case CARD_DRAGON:
+            attack_enemy (25);
+            break;
+
+        case CARD_PIXIES:
+            resource_add (&resources [player] [CASTLE], 22);
+            break;
+
+        case CARD_CURSE:
+            for (uint8_t resource = 0; resource < FIELD_MAX; resource++)
+            {
+                resource_add (&resources [player] [resource], 1);
+                resource_subtract (&resources [enemy] [resource], 1);
+
+                /* Ensure the enemy has at least one of each production type */
+                if (resource == BUILDERS || resource == SOLDIERS || resource == MAGI)
+                {
+                    if (resources [enemy] [resource] < 1)
+                    {
+                        resources [enemy] [resource] = 1;
+                    }
+                }
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    panel_update ();
 }
 
 
@@ -148,9 +351,9 @@ static void set_player (uint8_t p)
  */
 static void generate_resources (void)
 {
-    resources [player] [BRICKS]   += resources [player] [BUILDERS];
-    resources [player] [WEAPONS]  += resources [player] [SOLDIERS];
-    resources [player] [CRYSTALS] += resources [player] [MAGI];
+    resource_add (&resources [player] [BRICKS],   resources [player] [BUILDERS]);
+    resource_add (&resources [player] [WEAPONS],  resources [player] [SOLDIERS]);
+    resource_add (&resources [player] [CRYSTALS], resources [player] [MAGI]);
 
     panel_update ();
 }
