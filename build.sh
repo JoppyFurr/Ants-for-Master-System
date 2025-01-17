@@ -40,10 +40,12 @@ build_ants_for_master_system ()
             --sprite-palette 0x00 \
             --background tiles/empty.png \
             --reserve card_sprite,24 \
+            --reserve card_back,24 \
+            --reserve card_buffer,216 \
             --panels 4x2,4 tiles/player.png \
-            --panels 4x6,31 tiles/cards.png \
             --panels 4x14,1 --background tiles/panel.png \
-            --reserve panel_digits,32
+            --reserve panel_digits,32 \
+            --panels 4x6,31 tiles/cards.png
 
     )
 

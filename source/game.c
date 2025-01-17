@@ -25,7 +25,7 @@ extern uint16_t panel_player [4] [8];
 extern void card_slide_from (uint16_t start_x, uint16_t start_y, card_t card);
 extern void card_slide_to (uint16_t end_x, uint16_t end_y);
 extern void card_slide_done (void);
-extern void render_card_as_tile (uint8_t x, uint8_t y, card_t card);
+extern void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_t slot);
 extern void panel_init (void);
 extern void panel_update (void);
 extern void delay_frames (uint8_t frames);
@@ -66,7 +66,7 @@ static void draw_card (uint8_t slot, bool hidden)
 
     card_slide_from (DRAW_X_SPRITE, DRAW_Y_SPRITE, card);
     card_slide_to (slot << 5, HAND_Y_SPRITE);
-    render_card_as_tile (slot << 2, HAND_Y_TILE, card);
+    render_card_as_background (slot << 2, HAND_Y_TILE, card, slot);
     card_slide_done ();
 }
 
@@ -137,9 +137,9 @@ static void play_card (uint8_t slot)
 
     /* Animate */
     card_slide_from (slot << 5, HAND_Y_SPRITE, card);
-    render_card_as_tile (slot << 2, HAND_Y_TILE, CARD_NONE);
+    render_card_as_background (slot << 2, HAND_Y_TILE, CARD_NONE, slot);
     card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE);
-    render_card_as_tile (DISCARD_X_TILE, DISCARD_Y_TILE, card);
+    render_card_as_background (DISCARD_X_TILE, DISCARD_Y_TILE, card, 8);
     card_slide_done ();
 
     uint8_t enemy = !player;
@@ -310,9 +310,9 @@ static void discard_card (uint8_t slot)
 
     /* Animate */
     card_slide_from (slot << 5, HAND_Y_SPRITE, card);
-    render_card_as_tile (slot << 2, HAND_Y_TILE, CARD_NONE);
+    render_card_as_background (slot << 2, HAND_Y_TILE, CARD_NONE, slot);
     card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE);
-    render_card_as_tile (DISCARD_X_TILE, DISCARD_Y_TILE, card);
+    render_card_as_background (DISCARD_X_TILE, DISCARD_Y_TILE, card, 8);
     card_slide_done ();
 
     empty_slot = slot;
@@ -336,15 +336,15 @@ static void set_player (uint8_t p)
     {
         if (hand [slot] == CARD_NONE)
         {
-            render_card_as_tile (slot << 2, HAND_Y_TILE, CARD_NONE);
+            render_card_as_background (slot << 2, HAND_Y_TILE, CARD_NONE, slot);
         }
         else if (player == 0)
         {
-            render_card_as_tile (slot << 2, HAND_Y_TILE, hand [slot]);
+            render_card_as_background (slot << 2, HAND_Y_TILE, hand [slot], slot);
         }
         else
         {
-            render_card_as_tile (slot << 2, HAND_Y_TILE, CARD_BACK);
+            render_card_as_background (slot << 2, HAND_Y_TILE, CARD_BACK, slot);
         }
     }
 }
@@ -446,8 +446,8 @@ void game_start (void)
     panel_update ();
 
     /* Draw / discard area */
-    render_card_as_tile (12, 0, CARD_BACK);
-    render_card_as_tile (16, 0, CARD_NONE);
+    render_card_as_background (12, 0, CARD_BACK, 0);
+    render_card_as_background (16, 0, CARD_NONE, 8);
 
     /* Draw player indicator */
     SMS_loadTileMapArea (0, 1, panel_player [2], 4, 2);
