@@ -9,13 +9,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "sneptile.h"
 #include "sms_vdp.h"
 
 /* State */
 static uint32_t pattern_index = 0;
-static uint32_t file_first_index = 0; /* TODO: Only needed while the de-duplication buffer is per-file */
 
 /* Palettes */
 static uint8_t background_palette [16] = { };
@@ -47,27 +47,38 @@ int mode4_open_files (void)
         asprintf (&palette_path, "%s/%s", output_dir, palette_path);
     }
 
+    /* Pattern file */
     pattern_file = fopen (patterns_path, "w");
     if (pattern_file == NULL)
     {
         fprintf (stderr, "Unable to open output file patterns.h\n");
         return RC_ERROR;
     }
-    fprintf (pattern_file, "static const uint32_t patterns [] = {\n");
+    fprintf (pattern_file, "/*\n");
+    fprintf (pattern_file, " * VDP Pattern data\n");
+    fprintf (pattern_file, " */\n");
 
+    /* Pattern index file */
     pattern_index_file = fopen (pattern_index_path, "w");
     if (pattern_index_file == NULL)
     {
         fprintf (stderr, "Unable to open output file pattern_index.h\n");
         return RC_ERROR;
     }
+    fprintf (pattern_index_file, "/*\n");
+    fprintf (pattern_index_file, " * VDP Pattern index data\n");
+    fprintf (pattern_index_file, " */\n");
 
+    /* Palette file */
     palette_file = fopen (palette_path, "w");
     if (palette_file == NULL)
     {
         fprintf (stderr, "Unable to open output file palette.h\n");
         return RC_ERROR;
     }
+    fprintf (palette_file, "/*\n");
+    fprintf (palette_file, " * VDP Palette data\n");
+    fprintf (palette_file, " */\n");
 
     if (output_dir != NULL)
     {
@@ -81,93 +92,86 @@ int mode4_open_files (void)
 
 
 /*
- * Reserve patterns,
- * Eg, for runtime generated patterns.
- */
-void mode4_reserve_patterns (const char *name, uint32_t count)
-{
-    /* Generate header in patterns file */
-    fprintf (pattern_file, "\n    /* %s (reserved) */\n", name);
-
-    /* Generate pattern index define */
-    fprintf (pattern_index_file, "#define PATTERN_");
-    for (char c = *name; *name != '\0'; c = *++name)
-    {
-        /* Don't include the file extension */
-        if (c == '.')
-        {
-            break;
-        }
-        if (!isalnum (c))
-        {
-            c = '_';
-        }
-
-        fprintf (pattern_index_file, "%c", toupper(c));
-    }
-    fprintf (pattern_index_file, " %d\n", pattern_index);
-
-    /* Generate all-zero patterns in patterns file */
-    while (count--)
-    {
-        fprintf (pattern_file, "    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,\n");
-        pattern_index++;
-    }
-}
-
-
-/*
  * Mark the start of a new source file.
  */
 void mode4_new_input_file (const char *name)
 {
-    /* Mark in patterns file */
-    fprintf (pattern_file, "\n    /* %s */\n", name);
-
-    /* Generate pattern index define */
-    fprintf (pattern_index_file, "#define PATTERN_");
-
-    for (char c = *name; *name != '\0'; c = *++name)
+    static bool first = true;
+    if (first)
     {
-        /* Don't include the file extension */
-        if (c == '.')
-        {
-            break;
-        }
-        if (!isalnum (c))
-        {
-            c = '_';
-        }
-
-        fprintf (pattern_index_file, "%c", toupper(c));
+        first = false;
+    }
+    else
+    {
+        fprintf (pattern_file, "};\n");
     }
 
-    fprintf (pattern_index_file, " %d\n", pattern_index);
-    file_first_index = pattern_index;
+    /* Strip the extension for the array name */
+    char *base_name = strdup (name);
+    char *extension = strchr (base_name, '.');
+    if (extension)
+    {
+        extension [0] = '\0';
+    }
+
+    /* Start new data array in patterns file */
+    fprintf (pattern_file, "\nconst uint32_t %s_patterns [] = {\n", base_name);
+    free (base_name);
+
+    /* Pattern indices are within the current output array */
+    pattern_index = 0;
 }
 
 
 /*
- * Generate panel indexes for the file.
- * Bit 11 in the index indicates use of the sprite palette.
+ * Generate indices for the file.
  */
-void mode4_process_panels (const char *name, palette_t palette, uint32_t panel_count, uint32_t panel_width, uint32_t panel_height, pixel_t *buffer)
+void mode4_process_indices (const char *name, pixel_t *buffer)
 {
-    fprintf (pattern_index_file, "uint16_t panel_");
-
-    /* TODO: Stripping the extension from the name could be done somewhere common. */
-    for (char c = *name; *name != '\0'; c = *++name)
+    /* Strip the extension for the array name */
+    char *base_name = strdup (name);
+    char *extension = strchr (base_name, '.');
+    if (extension)
     {
-        /* Don't include the file extension */
-        if (c == '.')
-        {
-            break;
-        }
-
-        fprintf (pattern_index_file, "%c", tolower(c));
+        extension [0] = '\0';
     }
 
-    fprintf (pattern_index_file, " [%d] [%d] = {\n", panel_count, panel_width * panel_height);
+    fprintf (pattern_index_file, "\nconst uint16_t %s_indices [%d] = {\n   ", base_name, (current_image.width / 8) * (current_image.height / 8));
+    free (base_name);
+
+    uint32_t tile_count = 0;
+    for (uint32_t row = 0; row < current_image.height; row += 8)
+    for (uint32_t col = 0; col < current_image.width; col += 8)
+    {
+        fprintf (pattern_index_file, " 0x%04x", sneptile_get_match (&buffer [row * current_image.width + col]));
+
+        fprintf (pattern_index_file, "%s", (tile_count == 11) ? ",\n   " : ",");
+        tile_count = (tile_count + 1) % 12;
+    }
+    if (tile_count != 0)
+    {
+        fprintf (pattern_index_file, "\n");
+    }
+
+    fprintf (pattern_index_file, "};\n");
+}
+
+
+/*
+ * Generate panel indices for the file.
+ */
+void mode4_process_panels (const char *name, uint32_t panel_count, uint32_t panel_width, uint32_t panel_height, pixel_t *buffer)
+{
+    /* Strip the extension for the array name */
+    char *base_name = strdup (name);
+    char *extension = strchr (base_name, '.');
+    if (extension)
+    {
+        extension [0] = '\0';
+    }
+
+    fprintf (pattern_index_file, "\nconst uint16_t %s_panels [%d] [%d] = {\n", base_name, panel_count, panel_width * panel_height);
+    free (base_name);
 
     for (uint32_t panel_row = 0; panel_row < current_image.height; panel_row += 8 * panel_height)
     for (uint32_t panel_col = 0; panel_col < current_image.width; panel_col += 8 * panel_width)
@@ -177,9 +181,7 @@ void mode4_process_panels (const char *name, palette_t palette, uint32_t panel_c
         for (uint32_t row = panel_row; row < panel_row + panel_height * 8; row += 8)
         for (uint32_t col = panel_col; col < panel_col + panel_width * 8; col += 8)
         {
-            fprintf (pattern_index_file, "0x%04x",
-                    (file_first_index + sneptile_get_match (&buffer [row * current_image.width + col]))
-                    | ((palette == PALETTE_SPRITE) ? (1 << 11) : 0));
+            fprintf (pattern_index_file, "0x%04x", sneptile_get_match (&buffer [row * current_image.width + col]));
 
             if (!(row == panel_row + (panel_height - 1) * 8 &&
                   col == panel_col + (panel_width - 1) * 8))
@@ -228,7 +230,7 @@ static int mode4_palette_write (void)
     }
 
     /* SMS Palette */
-    fprintf (palette_file, "#ifdef TARGET_SMS\n");
+    fprintf (palette_file, "\n#ifdef TARGET_SMS\n");
 
     fprintf (palette_file, "static const uint8_t background_palette [16] = { ");
     for (uint32_t i = 0; i < background_palette_size; i++)

@@ -5,32 +5,31 @@ Sneptile is a tool for converting images into tile data for the Sega Master Syst
 Input images should have a width and height that are multiples of 8px.
 Tiles are generated left-to-right, top-to-bottom, first file to last file.
 
-Usage: `./Sneptile [--mode-0] --output tile_data --palette 0x04 0x19 [--reserve name,count] empty.png cursor.png`
+Within a file, tiles are de-duplicated (mode-4 only for now).
+
+Usage: `./Sneptile [--mode-0] --output-dir tile_data --palette 0x04 0x19 empty.png cursor.png`
 
  * `--mode-0`: Generate Mode-0 tiles.
  * `--mode-2`: Generate Mode-2 tiles.
  * `--tms-small-sprites`: Generate 8x8 sprites for the TMS modes.
  * `--tms-large-sprites`: Generate 16x16 sprites for the TMS modes.
  * `--sprites`: Mode-4 sprites. Index 0 will not be used for visible colours.
- * `--de-duplicate`: Within an input file, don't generate the same pattern twice.
- * `--output <dir>`: specifies the directory for the generated files
+ * `--output-dir <dir>`: specifies the directory for the generated files
  * `--sprite-palette <0x...>`: specifies the first n entries of the mode-4 sprite palette
  * `--background-palette <0x...>`: specifies the first n entries of the mode-4 background palette
- * `--reserve <name,n>`: Reserve <n> patterns before the next sheet (eg, for runtime generated patterns).
  * `--background`: The next sheet should use the background palette instead of the default sprite palette (mode-4)
- * `--panels <wxh,n>`: Per-image, describes <n> panels of size <w> x <h> tiles. Mode-4 only, and depends on de-duplication.
+ * `--panels <wxh,n>`: Per-image, describes <n> panels of size <w> x <h> tiles. Mode-4 only.
  * `... <.png>`: the remaining parameters are `.png` images to generate tiles from
 
 The following three files are generated in the specified output directory:
 
 patterns.h contains the pattern data to load into the VDP:
 ```
-const uint32_t patterns [] = {
-
-    /* empty.png */
+const uint32_t blank_patterns [] = {
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+};
 
-    /* cursor.png */
+const uint32_t cursor_patterns [] = {
     0x0000c000, 0x0000e040, 0x0000f060, 0x0000f870, 0x0000fc78, 0x0000fe7c, 0x0000ff7e, 0x0000ff7f,
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00008000,
     0x0000ff7f, 0x0000ff7c, 0x0000fe6c, 0x0000ef46, 0x0000cf06, 0x00008703, 0x00000703, 0x00000300,
@@ -46,10 +45,16 @@ const uint32_t patterns [] = {
 };
 ```
 
-pattern_index.h contains the index of the first tile from each image file:
+pattern_index.h will contain an indices array for each file, giving the pattern index for each
+8x8 tile on the input file.
 ```
-#define PATTERN_EMPTY 0
-#define PATTERN_CURSOR 1
+const uint16_t image_indices [56] = {
+    0x0000, 0x0001, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0003, 0x0007, 0x0005, 0x0006,
+    0x0008, 0x0009, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000b, 0x000f, 0x000d, 0x000e,
+    0x0010, 0x0011, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017, 0x0018, 0x0019, 0x0016,
+    0x001a, 0x001b, 0x001b, 0x001c, 0x001d, 0x001e, 0x001e, 0x001f, 0x0020, 0x0021, 0x0022, 0x0023,
+    0x0020, 0x0024, 0x0022, 0x0023, 0x0025, 0x0026, 0x0026, 0x0027,
+};
 ```
 
 palette.h contains the palette:
@@ -68,13 +73,14 @@ re-use on the Game Gear.
 To select the correct palette, you will need to define one of `TARGET_SMS` or `TARGET_GG`.
 
 ## Panels
-Per-file, a panel size and count can be described. When used an array of indexes will
-be generated in pattern_index.h.
+Per-file, if the file contains multiple panels (such as playing cards), a panel size and count can be described.
+When the `--panels` option is used, used an array of indexes will be generated in `pattern_index.h` for each panel,
+instead of a single indices array for the whole image.
 
 An example showing two files.
 The first file containing a single tile, the second containing 31 playing card panels:
 ```
-./Sneptile --de-duplicate --sprites --sprite-palette 0x00 \
+./Sneptile --sprites --sprite-palette 0x00 \
     tiles/empty.png \
     --panels 4x6,31 \
     tiles/cards.png
@@ -82,8 +88,6 @@ The first file containing a single tile, the second containing 31 playing card p
 ```
 will generate the following pattern_index.h:
 ```
-#define PATTERN_EMPTY 0
-#define PATTERN_CARDS 1
 uint16_t panel_cards [31] [24] = {
     { 0x0829, 0x082a, 0x082b, 0x082c, 0x0835, 0x0836, 0x0837, 0x0838, 0x0835, 0x0856, 0x0856, 0x0838,
       0x086b, 0x086c, 0x086d, 0x086e, 0x088c, 0x088d, 0x088d, 0x088e, 0x0898, 0x0899, 0x0899, 0x089a },
@@ -99,9 +103,13 @@ uint16_t panel_cards [31] [24] = {
 
 Bit 11 indicates that the sprite palette is being used (default).
 
-Note that, for now: --panels will only work when using mode-4 and de-duplication.
+Note that, for now: --panels will only work when using mode-4.
 
 ## TMS99xx Mode-0 and Mode-2
+
+Note: TMS99xx modes are not fully up-to-date with SMS mode behaviours.
+ * A single large pattern array is generated instead of one pattern array per input file.
+ * De-duplication has not been enabled
 
 Initial support is also available for Mode-0 and Mode-2 of the TMS9918 family.
 

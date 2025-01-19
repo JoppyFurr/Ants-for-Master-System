@@ -6,17 +6,18 @@
  * Sega Master System VDP, from a set of .png images.
  *
  * To Do list:
- *  - 'tall sprite mode' vertical tile ordering
+ *  - De-duplicate for tms99xx modes
+ *  - Split patterns across multiple output files to work with mappers.
+ *  - Make "--sprites" per-sheet. Background patterns should be able to use the extra index-0 colour.
+ *
+ * Consider:
  *  - Option to help automate colour-cycling
- *  - Possible architecture change:
- *    -> Always de-duplicate
- *    -> De-duplicate into a tile-buffer
- *    -> Then, feed the de-duplicated tiles into the pattern generators.
- *    -> For mode-0, consider sorting the tiles by colours first as a pre-processing step
- *    -> Consider an external configuration file to describe panels within images.
- *       -> If present could also contain the file names instead of as parameters.
- *  - Configuration file instead of ever-growing parameters?
- *  - De-tangle "--sprites", making it per-sheet. Background patterns should be able to use index 0.
+ *  - 'tall sprite mode' vertical tile ordering
+ *  - De-duplicate after converting to VDP representation instead of in image-space
+ *  - For mode-0, consider pre-processing the tiles into colour-groups before de-duplication / VDP representation
+ *  - Configuration files to describe what to do with each image rather than parameters
+ *  - Dithering support for handling full-colour images
+ *  - Lossy de-duplication to force an image to use at most <n> patterns
  */
 
 #include <stdbool.h>
@@ -34,7 +35,6 @@
 
 /* Global State */
 target_t target = VDP_MODE_4;
-bool de_duplicate = false;
 char *output_dir = NULL;
 image_t current_image;
 
@@ -119,9 +119,8 @@ static int sneptile_process_image (pixel_t *buffer, char *name)
         return -1;
     }
 
-    /* Because we only store a pointer into the image buffer, we
-     * currently can't de-duplicate across files. This should be
-     * changed to store copies of the tiles. */
+    /* Reset the unique tiles counter.
+     * Note that de-duplication is only performed within a file, not across files. */
     unique_tiles_count = 0;
 
     for (uint32_t row = 0; row < current_image.height; row += tile_height)
@@ -129,7 +128,7 @@ static int sneptile_process_image (pixel_t *buffer, char *name)
         for (uint32_t col = 0; col < current_image.width; col += tile_width)
         {
 
-            if (de_duplicate && unique_tiles_count < 512)
+            if ((target == VDP_MODE_4 || target == VDP_MODE_4_SPRITES) && unique_tiles_count < 512)
             {
                 if (sneptile_get_match (&buffer [row * current_image.width + col]) == -1)
                 {
@@ -166,7 +165,18 @@ static int sneptile_process_image (pixel_t *buffer, char *name)
         {
             case VDP_MODE_4:
             case VDP_MODE_4_SPRITES:
-                mode4_process_panels (name, (use_background_palette) ? PALETTE_BACKGROUND : PALETTE_SPRITE, panel_count, panel_width, panel_height, buffer);
+                mode4_process_panels (name, panel_count, panel_width, panel_height, buffer);
+            default:
+                break;
+        }
+    }
+    else
+    {
+        switch (target)
+        {
+            case VDP_MODE_4:
+            case VDP_MODE_4_SPRITES:
+                mode4_process_indices (name, buffer);
             default:
                 break;
         }
@@ -285,13 +295,12 @@ int main (int argc, char **argv)
         fprintf (stderr, "    --tms-small-sprites : Generate TMS99xx sprite patterns (8x8)\n");
         fprintf (stderr, "    --tms-large-sprites : Generate TMS99xx sprite patterns (16x16)\n");
         fprintf (stderr, "    --de-duplicate : Within an input file, don't generate the same pattern twice\n");
-        fprintf (stderr, "    --output <dir> : Specify output directory\n");
+        fprintf (stderr, "    --output-dir <dir> : Specify output directory\n");
         fprintf (stderr, "  Mode-4 options:\n");
         fprintf (stderr, "    --sprite-palette <0x00 0x01..> : Pre-defined palette entries for the sprite palette.\n");
         fprintf (stderr, "    --background-palette <0x00 0x01..> : Pre-defined palette entries for the background palette.\n");
         fprintf (stderr, "    --sprites : Don't use index 0 for visible colours.\n");
         fprintf (stderr, "  Per-sheet options:\n");
-        fprintf (stderr, "    --reserve <name,n> : Reserve <n> patterns before the next sheet (eg, for runtime generated patterns)\n");
         fprintf (stderr, "    --background : The next sheet should use the background palette instead of the sprite palette (mode-4)\n");
         fprintf (stderr, "    --panels <wxh,n> : The following sheet contains <n> panels of size <w> x <h>. Depends on de-duplication.\n");
         return EXIT_FAILURE;
@@ -303,13 +312,7 @@ int main (int argc, char **argv)
     while (argc > 0)
     {
         /* Common options */
-        if (strcmp (argv [0], "--de-duplicate") == 0)
-        {
-            de_duplicate = true;
-            argv += 1;
-            argc -= 1;
-        }
-        else if (strcmp (argv [0], "--output") == 0 && argc > 2)
+        if (strcmp (argv [0], "--output-dir") == 0 && argc > 2)
         {
             output_dir = argv [1];
             argv += 2;
@@ -411,24 +414,7 @@ int main (int argc, char **argv)
     {
         for (uint32_t i = 0; i < argc; i++)
         {
-            if (strcmp (argv [i], "--reserve") == 0)
-            {
-                char name [80] = { '\0' };
-                unsigned int count;
-                sscanf (argv [++i], "%79[^,],%u", name, &count);
-
-                /* For now, only implemented for mode-4 */
-                switch (target)
-                {
-                    case VDP_MODE_4:
-                    case VDP_MODE_4_SPRITES:
-                        mode4_reserve_patterns (name, count);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else if (strcmp (argv [i], "--background") == 0)
+            if (strcmp (argv [i], "--background") == 0)
             {
                 use_background_palette = true;
             }

@@ -7,19 +7,19 @@ sdcc="${HOME}/Code/sdcc-4.2.0/bin/sdcc"
 devkitSMS="${HOME}/Code/devkitSMS"
 SMSlib="${devkitSMS}/SMSlib"
 ihx2sms="${devkitSMS}/ihx2sms/Linux/ihx2sms"
-sneptile="./tools/Sneptile-0.9.0/Sneptile"
+sneptile="./tools/Sneptile-0.10.0/Sneptile"
 
 build_sneptile ()
 {
     # Early return if we've already got an up-to-date build
-    if [ -e $sneptile -a "./tools/Sneptile-0.9.0/source/main.c" -ot $sneptile ]
+    if [ -e $sneptile -a "./tools/Sneptile-0.10.0/source/main.c" -ot $sneptile ]
     then
         return
     fi
 
     echo "Building Sneptile..."
     (
-        cd "tools/Sneptile-0.9.0"
+        cd "tools/Sneptile-0.10.0"
         ./build.sh
     )
 }
