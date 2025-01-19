@@ -18,9 +18,6 @@
 
 #define MIN(X,Y) (((X) < (Y)) ? X : Y)
 
-/* External data */
-extern uint16_t panel_player [4] [8];
-
 /* External functions */
 extern void card_slide_from (uint16_t start_x, uint16_t start_y, card_t card);
 extern void card_slide_to (uint16_t end_x, uint16_t end_y);
@@ -29,6 +26,7 @@ extern void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_
 extern void panel_init (void);
 extern void panel_update (void);
 extern void delay_frames (uint8_t frames);
+extern void player_indicator_update (uint8_t player);
 
 /* Game State */
 uint8_t player = 0;
@@ -328,8 +326,7 @@ static void set_player (uint8_t p)
     card_t *hand = hands [player];
 
     /* Player indicator */
-    SMS_loadTileMapArea ( 0, 1, panel_player [0 | (player == 0 ? 2 : 0)], 4, 2);
-    SMS_loadTileMapArea (28, 1, panel_player [1 | (player == 1 ? 2 : 0)], 4, 2);
+    player_indicator_update (p);
 
     /* Show the new player's hand */
     for (uint8_t slot = 0; slot < 8; slot++)
@@ -450,8 +447,7 @@ void game_start (void)
     render_card_as_background (16, 0, CARD_NONE, 8);
 
     /* Draw player indicator */
-    SMS_loadTileMapArea (0, 1, panel_player [2], 4, 2);
-    SMS_loadTileMapArea (28, 1, panel_player [1], 4, 2);
+    player_indicator_update (0);
 
     /* Deal Player 1 */
     set_player (0);

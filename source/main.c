@@ -21,6 +21,26 @@
 #include "save.h"
 #include "rng.h"
 
+/*
+* VDP patterns layout.
+* [       0] - Blank
+* [  1.. 24] - Card as sprite
+* [ 25.. 48] - Card back
+* [ 49..264] - Dynamic card buffer
+* [265..296] - Panel digits
+* [297..   ] - Static patterns
+*/
+
+#define PATTERN_BLANK           0
+#define PATTERN_CARD_SPRITE     1
+#define PATTERN_CARD_BACK      25
+#define PATTERN_CARD_BUFFER    49
+#define PATTERN_PANEL_DIGITS  265
+#define STATIC_PATTERNS_START  297
+
+static uint16_t player_patterns_start = 0;
+static uint16_t panel_patterns_start = 0;
+
 /* External variables */
 extern uint16_t resources [2] [FIELD_MAX];
 
@@ -39,14 +59,19 @@ static const uint8_t card_sprite [24] = {
     PATTERN_CARD_SPRITE + 20, PATTERN_CARD_SPRITE + 21, PATTERN_CARD_SPRITE + 22, PATTERN_CARD_SPRITE + 23
 };
 
+/* A blank pattern */
+static const uint32_t blank_pattern [8] = {
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+};
+
 /* Empty card area */
 static const uint16_t empty_slot [24] = {
-    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
-    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
-    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
-    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
-    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY,
-    PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY, PATTERN_EMPTY
+    PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK,
+    PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK,
+    PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK,
+    PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK,
+    PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK,
+    PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK, PATTERN_BLANK
 };
 
 /* Reserved patterns for the card back. It's always in memory and uses 24 unique tiles. */
@@ -83,8 +108,8 @@ static void card_buffer_prepare (void)
     /* Fixed patterns for card-back buffer */
     for (uint8_t i = 0; i < 24; i++)
     {
-        uint16_t pattern = panel_cards [30] [i] << 3;
-        SMS_loadTiles (&patterns [pattern], PATTERN_CARD_BACK + i, 32);
+        uint16_t pattern = cards_panels [30] [i] << 3;
+        SMS_loadTiles (&cards_patterns [pattern], PATTERN_CARD_BACK + i, 32);
     }
 }
 
@@ -116,8 +141,8 @@ static inline void render_card_as_sprite_prepare (card_t card)
 {
     for (uint8_t i = 0; i < 24; i++)
     {
-        uint16_t pattern = panel_cards [card] [i] << 3;
-        SMS_loadTiles (&patterns [pattern], card_sprite [i], 32);
+        uint16_t pattern = cards_panels [card] [i] << 3;
+        SMS_loadTiles (&cards_patterns [pattern], card_sprite [i], 32);
     }
 }
 
@@ -173,8 +198,8 @@ void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_t slot)
             /* copy pattern bytes to VRAM */
             for (uint8_t i = 0; i < 24; i++)
             {
-                uint16_t pattern = panel_cards [card] [i] << 3;
-                SMS_loadTiles (&patterns [pattern], card_buffer [slot][i] & 0x01ff, 32);
+                uint16_t pattern = cards_panels [card] [i] << 3;
+                SMS_loadTiles (&cards_patterns [pattern], card_buffer [slot][i] & 0x01ff, 32);
             }
             cache [slot] = card;
         }
@@ -264,9 +289,16 @@ void panel_init (void)
 {
     const uint8_t y_positions [8] = { 4, 5, 7, 8, 10, 11, 14, 15 };
 
+    uint16_t vdp_panel_indices [56];
+
+    for (uint8_t i = 0; i < 56; i++)
+    {
+        vdp_panel_indices [i] = panel_indices [i] + panel_patterns_start;
+    }
+
     /* Copy tilemap from image */
-    SMS_loadTileMapArea (0, 3, panel_panel [0], 4, 14);
-    SMS_loadTileMapArea (28, 3, panel_panel [0], 4, 14);
+    SMS_loadTileMapArea (0, 3, vdp_panel_indices, 4, 14);
+    SMS_loadTileMapArea (28, 3, vdp_panel_indices, 4, 14);
 
     /* Set up panel digit areas */
     for (uint8_t i = 0; i < 16; i++)
@@ -321,8 +353,8 @@ void panel_update (void)
         }
 
         /* Start by populating the pattern buffer with the panel background tiles */
-        memcpy (buffer_l,  &patterns [panel_panel [0] [field_backgrounds [field] + 0] << 3], 32);
-        memcpy (buffer_r, &patterns [panel_panel [0] [field_backgrounds [field] + 1] << 3], 32);
+        memcpy (buffer_l,  &panel_patterns [panel_indices [field_backgrounds [field] + 0] << 3], 32);
+        memcpy (buffer_r, &panel_patterns [panel_indices [field_backgrounds [field] + 1] << 3], 32);
 
         /* Draw the digit font into the pattern */
         for (uint8_t line = 0; line < 5; line++)
@@ -375,6 +407,37 @@ void panel_update (void)
 
 
 /*
+ * Update the player indicator at the top of the screen.
+ */
+void player_indicator_update (uint8_t player)
+{
+    uint16_t left [8];
+    uint16_t right [8];
+
+    if (player == 0)
+    {
+        for (uint8_t i = 0; i < 8; i++)
+        {
+            left [i] = player_panels [2] [i] + player_patterns_start | 0x0800;
+            right [i] = player_panels [1] [i] + player_patterns_start | 0x0800;
+        }
+    }
+    else
+    {
+        for (uint8_t i = 0; i < 8; i++)
+        {
+            left [i] = player_panels [0] [i] + player_patterns_start | 0x0800;
+            right [i] = player_panels [3] [i] + player_patterns_start | 0x0800;
+        }
+    }
+
+    /* Write to VDP */
+    SMS_loadTileMapArea (0, 1, left, 4, 2);
+    SMS_loadTileMapArea (28, 1, right, 4, 2);
+}
+
+
+/*
  * Entry point.
  */
 void main (void)
@@ -384,9 +447,16 @@ void main (void)
     SMS_loadSpritePalette (sprite_palette);
     SMS_setBackdropColor (0);
 
-    /* Copy the patterns into VRAM, but not the cards. There are too many
+    /* Copy the static patterns into VRAM, but not the cards. There are too many
      * cards to fit in VRAM at once, so they will be loaded as needed. */
-    SMS_loadTiles (patterns, 0, PATTERN_CARDS << 5);
+    SMS_loadTiles (blank_pattern, PATTERN_BLANK, sizeof (blank_pattern));
+
+    player_patterns_start = STATIC_PATTERNS_START;
+    SMS_loadTiles (player_patterns, player_patterns_start, sizeof (player_patterns));
+
+    panel_patterns_start = player_patterns_start + (sizeof (player_patterns) >> 5);
+    SMS_loadTiles (panel_patterns, panel_patterns_start, sizeof (panel_patterns));
+
     card_buffer_prepare ();
     clear_background ();
 
