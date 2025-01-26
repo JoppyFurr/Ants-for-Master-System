@@ -139,10 +139,48 @@ static inline void clear_background (void)
  */
 static inline void render_card_as_sprite_prepare (card_t card)
 {
-    for (uint8_t i = 0; i < 24; i++)
+    if (card & DISCARD_BIT)
     {
-        uint16_t pattern = cards_panels [card] [i] << 3;
-        SMS_loadTiles (&cards_patterns [pattern], card_sprite [i], 32);
+        card = card & CARD_BITS;
+
+        const uint16_t *discard_panels = (card < 10) ? &cards_panels [CARD_DISCARD] [0] :
+                                         (card < 20) ? &cards_panels [CARD_DISCARD] [8] :
+                                                       &cards_panels [CARD_DISCARD] [16];
+
+        /* Top section (unchanged) */
+        for (uint8_t i = 0; i < 16; i++)
+        {
+            uint16_t pattern = cards_panels [card] [i] << 3;
+            SMS_loadTiles (&cards_patterns [pattern], card_sprite [i] & 0x01ff, 32);
+        }
+
+        /* Middle section (half-and-half) */
+        for (uint8_t i = 0; i < 4; i++)
+        {
+            uint32_t pattern_buffer [8];
+            uint16_t card_pattern = cards_panels [card] [i + 16] << 3;
+            uint16_t discard_pattern = discard_panels [i] << 3;
+
+            /* Three lines from the card pattern, and five lines from the discard pattern */
+            memcpy (&pattern_buffer [0], &cards_patterns [card_pattern    + 0], 3 << 2);
+            memcpy (&pattern_buffer [3], &cards_patterns [discard_pattern + 3], 5 << 2);
+            SMS_loadTiles (pattern_buffer, card_sprite [i + 16] & 0x01ff, 32);
+        }
+
+        /* Bottom section (discard-text) */
+        for (uint8_t i = 4; i < 8; i++)
+        {
+            uint16_t pattern = discard_panels [i] << 3;
+            SMS_loadTiles (&cards_patterns [pattern], card_sprite [i + 16] & 0x01ff, 32);
+        }
+    }
+    else
+    {
+        for (uint8_t i = 0; i < 24; i++)
+        {
+            uint16_t pattern = cards_panels [card] [i] << 3;
+            SMS_loadTiles (&cards_patterns [pattern], card_sprite [i], 32);
+        }
     }
 }
 
@@ -158,9 +196,9 @@ static inline void render_card_as_sprite (uint16_t x, uint16_t y)
     for (uint8_t panel_y = 0; panel_y < 6; panel_y++)
     for (uint8_t panel_x = 0; panel_x < 4; panel_x++)
     {
-        /* TODO: The sprite attribute table only allows an 8-bit pattern index.
-         *       The cards use more than 256 patterns, so the particular card
-         *       we want to render may need to be copied to a lower VRAM address. */
+        /* The sprite attribute table only allows an 8-bit pattern index.
+         * The cards use more than 256 patterns, so the particular card
+         * we want to render needs to be copied to a lower VRAM address. */
         SMS_addSprite (x + (panel_x << 3),
                        y + (panel_y << 3), card_sprite [pattern_index++]);
 
@@ -195,13 +233,52 @@ void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_t slot)
          * in this buffer slot, then update the buffer. */
         if (cache [slot] != card)
         {
-            /* copy pattern bytes to VRAM */
-            for (uint8_t i = 0; i < 24; i++)
-            {
-                uint16_t pattern = cards_panels [card] [i] << 3;
-                SMS_loadTiles (&cards_patterns [pattern], card_buffer [slot][i] & 0x01ff, 32);
-            }
             cache [slot] = card;
+
+            if (card & DISCARD_BIT)
+            {
+                card = card & CARD_BITS;
+
+                const uint16_t *discard_panels = (card < 10) ? &cards_panels [CARD_DISCARD] [0] :
+                                                 (card < 20) ? &cards_panels [CARD_DISCARD] [8] :
+                                                               &cards_panels [CARD_DISCARD] [16];
+
+                /* Top section (unchanged) */
+                for (uint8_t i = 0; i < 16; i++)
+                {
+                    uint16_t pattern = cards_panels [card] [i] << 3;
+                    SMS_loadTiles (&cards_patterns [pattern], card_buffer [slot][i] & 0x01ff, 32);
+                }
+
+                /* Middle section (half-and-half) */
+                for (uint8_t i = 0; i < 4; i++)
+                {
+                    uint32_t pattern_buffer [8];
+                    uint16_t card_pattern = cards_panels [card] [i + 16] << 3;
+                    uint16_t discard_pattern = discard_panels [i] << 3;
+
+                    /* Three lines from the card pattern, and five lines from the discard pattern */
+                    memcpy (&pattern_buffer [0], &cards_patterns [card_pattern    + 0], 3 << 2);
+                    memcpy (&pattern_buffer [3], &cards_patterns [discard_pattern + 3], 5 << 2);
+                    SMS_loadTiles (pattern_buffer, card_buffer [slot][i + 16] & 0x01ff, 32);
+                }
+
+                /* Bottom section (discard-text) */
+                for (uint8_t i = 4; i < 8; i++)
+                {
+                    uint16_t pattern = discard_panels [i] << 3;
+                    SMS_loadTiles (&cards_patterns [pattern], card_buffer [slot][i + 16] & 0x01ff, 32);
+                }
+            }
+            else
+            {
+                /* copy pattern bytes to VRAM */
+                for (uint8_t i = 0; i < 24; i++)
+                {
+                    uint16_t pattern = cards_panels [card] [i] << 3;
+                    SMS_loadTiles (&cards_patterns [pattern], card_buffer [slot][i] & 0x01ff, 32);
+                }
+            }
         }
 
         SMS_loadTileMapArea (x, y, card_buffer [slot], 4, 6);

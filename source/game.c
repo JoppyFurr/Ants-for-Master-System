@@ -307,10 +307,10 @@ static void discard_card (uint8_t slot)
     card_t card = hands [player] [slot];
 
     /* Animate */
-    card_slide_from (slot << 5, HAND_Y_SPRITE, card);
+    card_slide_from (slot << 5, HAND_Y_SPRITE, card | DISCARD_BIT);
     render_card_as_background (slot << 2, HAND_Y_TILE, CARD_NONE, slot);
     card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE);
-    render_card_as_background (DISCARD_X_TILE, DISCARD_Y_TILE, card, 8);
+    render_card_as_background (DISCARD_X_TILE, DISCARD_Y_TILE, card | DISCARD_BIT, 8);
     card_slide_done ();
 
     empty_slot = slot;

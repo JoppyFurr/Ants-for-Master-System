@@ -19,6 +19,8 @@
 #define DISCARD_X_SPRITE 128
 #define DISCARD_Y_SPRITE 0
 
+#define CARD_BITS   0x1f
+#define DISCARD_BIT 0x80
 
 typedef enum card_e
 {
@@ -56,5 +58,6 @@ typedef enum card_e
     CARD_CURSE,
 
     CARD_BACK,
+    CARD_DISCARD,
     CARD_NONE
 } card_t;
