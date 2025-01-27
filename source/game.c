@@ -25,7 +25,6 @@ extern void card_slide_to (uint16_t end_x, uint16_t end_y);
 extern void card_slide_done (void);
 extern void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_t slot);
 extern void delay_frames (uint8_t frames);
-extern void player_indicator_update (uint8_t player);
 
 /* Game State */
 uint8_t player = 0;
@@ -325,7 +324,7 @@ static void set_player (uint8_t p)
     card_t *hand = hands [player];
 
     /* Player indicator */
-    player_indicator_update (p);
+    panel_update_player (p);
 
     /* Show the new player's hand */
     for (uint8_t slot = 0; slot < 8; slot++)
@@ -446,7 +445,7 @@ void game_start (void)
     render_card_as_background (16, 0, CARD_NONE, 8);
 
     /* Draw player indicator */
-    player_indicator_update (0);
+    panel_update_player (0);
 
     /* Deal Player 1 */
     set_player (0);

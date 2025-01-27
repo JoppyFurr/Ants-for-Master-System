@@ -14,12 +14,49 @@
 #include "game.h"
 
 /* Pattern and index data */
+extern const uint16_t player_panels [] [8];
+extern const uint32_t player_patterns [];
+extern uint16_t player_patterns_start;
+
 extern const uint16_t panel_indices [];
 extern const uint32_t panel_patterns [];
 extern uint16_t panel_patterns_start;
 
 /* Game state */
 extern uint16_t resources [2] [FIELD_MAX];
+
+
+/*
+ * Update the player indicator at the top of the screen.
+ */
+void panel_update_player (uint8_t player)
+{
+    uint16_t left [8];
+    uint16_t right [8];
+
+    if (player == 0)
+    {
+        for (uint8_t i = 0; i < 8; i++)
+        {
+            left [i] = player_panels [2] [i] + player_patterns_start | 0x0800;
+            right [i] = player_panels [1] [i] + player_patterns_start | 0x0800;
+        }
+    }
+    else
+    {
+        for (uint8_t i = 0; i < 8; i++)
+        {
+            left [i] = player_panels [0] [i] + player_patterns_start | 0x0800;
+            right [i] = player_panels [3] [i] + player_patterns_start | 0x0800;
+        }
+    }
+
+    /* Write to VDP */
+    SMS_loadTileMapArea (0, 1, left, 4, 2);
+    SMS_loadTileMapArea (28, 1, right, 4, 2);
+}
+
+
 
 /*
  * Initialise the side-panel.

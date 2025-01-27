@@ -343,37 +343,6 @@ void delay_frames (uint8_t frames)
 
 
 /*
- * Update the player indicator at the top of the screen.
- */
-void player_indicator_update (uint8_t player)
-{
-    uint16_t left [8];
-    uint16_t right [8];
-
-    if (player == 0)
-    {
-        for (uint8_t i = 0; i < 8; i++)
-        {
-            left [i] = player_panels [2] [i] + player_patterns_start | 0x0800;
-            right [i] = player_panels [1] [i] + player_patterns_start | 0x0800;
-        }
-    }
-    else
-    {
-        for (uint8_t i = 0; i < 8; i++)
-        {
-            left [i] = player_panels [0] [i] + player_patterns_start | 0x0800;
-            right [i] = player_panels [3] [i] + player_patterns_start | 0x0800;
-        }
-    }
-
-    /* Write to VDP */
-    SMS_loadTileMapArea (0, 1, left, 4, 2);
-    SMS_loadTileMapArea (28, 1, right, 4, 2);
-}
-
-
-/*
  * Entry point.
  */
 void main (void)

@@ -5,6 +5,9 @@
  * Side-panel header
  */
 
+/* Update the player indicator at the top of the screen. */
+void panel_update_player (uint8_t player);
+
 /* Initialise the side-panel. */
 void panel_init (void);
 
