@@ -14,6 +14,7 @@
 
 #define INCLUDE_CARD_DATA
 #include "cards.h"
+#include "panel.h"
 #include "game.h"
 
 #define MIN(X,Y) (((X) < (Y)) ? X : Y)
@@ -23,8 +24,6 @@ extern void card_slide_from (uint16_t start_x, uint16_t start_y, card_t card);
 extern void card_slide_to (uint16_t end_x, uint16_t end_y);
 extern void card_slide_done (void);
 extern void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_t slot);
-extern void panel_init (void);
-extern void panel_update (void);
 extern void delay_frames (uint8_t frames);
 extern void player_indicator_update (uint8_t player);
 
