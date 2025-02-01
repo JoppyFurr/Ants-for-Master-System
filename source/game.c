@@ -25,6 +25,7 @@ extern void card_slide_to (uint16_t end_x, uint16_t end_y);
 extern void card_slide_done (void);
 extern void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_t slot);
 extern void delay_frames (uint8_t frames);
+extern void castle_update (void);
 
 /* Game State */
 uint8_t player = 0;
@@ -288,6 +289,7 @@ static void play_card (uint8_t slot)
             break;
     }
 
+    castle_update ();
     panel_update ();
     empty_slot = slot;
 }
@@ -446,6 +448,9 @@ void game_start (void)
 
     /* Draw player indicator */
     panel_update_player (0);
+
+    /* Initial castle */
+    castle_update ();
 
     /* Deal Player 1 */
     set_player (0);
