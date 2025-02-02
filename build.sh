@@ -47,7 +47,7 @@ build_ants_for_master_system ()
 
     mkdir -p build
     echo "  Compiling..."
-    for file in main game panel rng save
+    for file in main game castle panel rng save
     do
         echo "   -> ${file}.c"
         ${sdcc} -c -mz80 --peep-file ${devkitSMS}/SMSlib/src/peep-rules.txt -I ${SMSlib}/src \
