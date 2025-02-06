@@ -41,6 +41,7 @@ build_ants_for_master_system ()
             --panels 4x2,4 tiles/player.png \
             --background tiles/panel.png \
             --panels 6x3,2 tiles/castles.png \
+            --panels 1x2,2 tiles/fence.png \
             --panels 4x6,32 tiles/cards.png
 
     )

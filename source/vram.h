@@ -11,7 +11,9 @@
  *   [265..296] - Panel digit area
  *   [297..326] - Castle dynamic buffer (left)
  *   [327..356] - Castle dynamic buffer (right)
- *   [357..   ] - Static patterns (72 for now)
+ *   [357..360] - Fence dynamic buffer (left)
+ *   [361..364] - Fence dynamic buffer (right)
+ *   [365..   ] - Static patterns (72 for now)
  */
 
 #define PATTERN_BLANK               0
@@ -21,5 +23,7 @@
 #define PATTERN_PANEL_DIGITS      265
 #define PATTERN_CASTLE_1_BUFFER   297
 #define PATTERN_CASTLE_2_BUFFER   327
-#define STATIC_PATTERNS_START     357
+#define PATTERN_FENCE_1_BUFFER    357
+#define PATTERN_FENCE_2_BUFFER    361
+#define STATIC_PATTERNS_START     365
 

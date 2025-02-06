@@ -7,3 +7,6 @@
 
 /* Draw the castles */
 void castle_update (void);
+
+/* Draw the fences */
+void fence_update (void);

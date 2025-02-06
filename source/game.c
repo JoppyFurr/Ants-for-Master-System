@@ -290,6 +290,7 @@ static void play_card (uint8_t slot)
     }
 
     castle_update ();
+    fence_update ();
     panel_update ();
     empty_slot = slot;
 }
@@ -449,8 +450,9 @@ void game_start (void)
     /* Draw player indicator */
     panel_update_player (0);
 
-    /* Initial castle */
+    /* Initial castle and fences */
     castle_update ();
+    fence_update ();
 
     /* Deal Player 1 */
     set_player (0);
