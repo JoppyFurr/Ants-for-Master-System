@@ -180,5 +180,3 @@ void panel_update (void)
     memcpy (cache [0], resources [0], sizeof (cache [0]));
     memcpy (cache [1], resources [1], sizeof (cache [1]));
 }
-
-

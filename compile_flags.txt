@@ -1,0 +1,8 @@
+-D__z88dk_fastcall=
+-D__at(...)=
+-D__preserves_regs(...)=
+-D__naked=
+-D__sdcccall(...)=
+-D__z88dk_callee=
+-D__sfr=char
+-I../devkitSMS/SMSlib/src/
