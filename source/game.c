@@ -51,8 +51,33 @@ const uint16_t starting_resources [8] = {
  */
 static void draw_card (uint8_t slot, bool hidden)
 {
-    /* Deal */
-    card_t card = rand () % 30;
+    uint16_t r = rand ();
+    card_t card = 0;
+
+    /* Probability ranges derived from the original game, using:
+     *
+     *     for (uint32_t i = 0x0000; i <= 32767; i++)
+     *     {
+     *         int card = 30 * pow ((double) i / 0x10000), 1.6);
+     *         card = card / 3 + (card % 3) * 10;
+     *         count [card] += 1;
+     *     }
+     *
+     * Note that 32767 is RAND_MAX for SDCC.
+     */
+    const uint16_t ranges [30] = {
+         3911 , 5442 , 6654,  7705 , 8653, 9527,  10346, 11119, 11855, 12561,
+        14682, 16074, 17223, 18235, 19156, 20011, 20813, 21574, 22300, 22996,
+        24735, 26025, 27121, 28099, 28996, 29831, 30619, 31367, 32082, 0xffff
+    };
+
+    for (card = 0; card < 30; card++)
+    {
+        if (r <= ranges [card])
+        {
+            break;
+        }
+    }
     hands [player] [slot] = card;
 
     /* Animate */
