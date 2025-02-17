@@ -5,25 +5,21 @@
  * VRAM Layout:
  *
  *   [       0] - Blank pattern
- *   [  1.. 24] - Card as sprite
- *   [ 25.. 48] - Card back
- *   [ 49..264] - nine-card dynamic buffer
- *   [265..296] - Panel digit area
- *   [297..326] - Castle dynamic buffer (left)
- *   [327..356] - Castle dynamic buffer (right)
- *   [357..360] - Fence dynamic buffer (left)
- *   [361..364] - Fence dynamic buffer (right)
- *   [365..   ] - Static patterns (72 for now)
+ *   [  1..240] - ten-card dynamic buffer
+ *   [241..272] - Panel digit area
+ *   [273..302] - Castle dynamic buffer (left)
+ *   [303..332] - Castle dynamic buffer (right)
+ *   [333..336] - Fence dynamic buffer (left)
+ *   [337..340] - Fence dynamic buffer (right)
+ *   [341..   ] - Static patterns (72 for now)
  */
 
 #define PATTERN_BLANK               0
-#define PATTERN_CARD_SPRITE         1
-#define PATTERN_CARD_BACK          25
-#define PATTERN_CARD_BUFFER        49
-#define PATTERN_PANEL_DIGITS      265
-#define PATTERN_CASTLE_1_BUFFER   297
-#define PATTERN_CASTLE_2_BUFFER   327
-#define PATTERN_FENCE_1_BUFFER    357
-#define PATTERN_FENCE_2_BUFFER    361
-#define STATIC_PATTERNS_START     365
+#define PATTERN_CARD_BUFFER         1
+#define PATTERN_PANEL_DIGITS      241
+#define PATTERN_CASTLE_1_BUFFER   273
+#define PATTERN_CASTLE_2_BUFFER   303
+#define PATTERN_FENCE_1_BUFFER    333
+#define PATTERN_FENCE_2_BUFFER    337
+#define STATIC_PATTERNS_START     341
 

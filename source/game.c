@@ -21,7 +21,7 @@
 #define MIN(X,Y) (((X) < (Y)) ? X : Y)
 
 /* External functions */
-extern void card_slide_from (uint16_t start_x, uint16_t start_y, card_t card);
+extern void card_slide_from (uint16_t start_x, uint16_t start_y, card_t card, uint8_t slot);
 extern void card_slide_to (uint16_t end_x, uint16_t end_y);
 extern void card_slide_done (void);
 extern void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_t slot);
@@ -86,7 +86,7 @@ static void draw_card (uint8_t slot, bool hidden)
         card = CARD_BACK;
     }
 
-    card_slide_from (DRAW_X_SPRITE, DRAW_Y_SPRITE, card);
+    card_slide_from (DRAW_X_SPRITE, DRAW_Y_SPRITE, card, slot);
     card_slide_to (slot << 5, HAND_Y_SPRITE);
     render_card_as_background (slot << 2, HAND_Y_TILE, card, slot);
     card_slide_done ();
@@ -158,7 +158,7 @@ static void play_card (uint8_t slot)
     panel_update ();
 
     /* Animate */
-    card_slide_from (slot << 5, HAND_Y_SPRITE, card);
+    card_slide_from (slot << 5, HAND_Y_SPRITE, card, slot);
     render_card_as_background (slot << 2, HAND_Y_TILE, CARD_NONE, slot);
     card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE);
     render_card_as_background (DISCARD_X_TILE, DISCARD_Y_TILE, card, 8);
@@ -333,7 +333,7 @@ static void discard_card (uint8_t slot)
     card_t card = hands [player] [slot];
 
     /* Animate */
-    card_slide_from (slot << 5, HAND_Y_SPRITE, card | DISCARD_BIT);
+    card_slide_from (slot << 5, HAND_Y_SPRITE, card | DISCARD_BIT, slot);
     render_card_as_background (slot << 2, HAND_Y_TILE, CARD_NONE, slot);
     card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE);
     render_card_as_background (DISCARD_X_TILE, DISCARD_Y_TILE, card | DISCARD_BIT, 8);
@@ -469,7 +469,7 @@ void game_start (void)
     panel_update ();
 
     /* Draw / discard area */
-    render_card_as_background (12, 0, CARD_BACK, 0);
+    render_card_as_background (12, 0, CARD_BACK, 9);
     render_card_as_background (16, 0, CARD_NONE, 8);
 
     /* Draw player indicator */
