@@ -10,8 +10,8 @@
 #include "SMSlib.h"
 
 #define TARGET_SMS
+#include "bank_2.h"
 #include "../tile_data/palette.h"
-#include "../tile_data/patterns.h"
 #include "../tile_data/pattern_index.h"
 
 #include "vram.h"
@@ -284,6 +284,7 @@ void main (void)
     SMS_loadBGPalette (background_palette);
     SMS_loadSpritePalette (sprite_palette);
     SMS_setBackdropColor (0);
+    SMS_mapROMBank (2); /* For now, we use only a single bank. */
 
     /* Copy the static patterns into VRAM, but not the cards. There are too many
      * cards to fit in VRAM at once, so they will be loaded as needed. */

@@ -46,18 +46,25 @@ build_ants_for_master_system ()
 
     )
 
-    mkdir -p build
+    mkdir -p build/code
     echo "  Compiling..."
     for file in main game castle panel rng save
     do
         echo "   -> ${file}.c"
         ${sdcc} -c -mz80 --peep-file ${devkitSMS}/SMSlib/src/peep-rules.txt -I ${SMSlib}/src \
-            -o "build/${file}.rel" "source/${file}.c" || exit 1
+            -o "build/code/${file}.rel" "source/${file}.c" || exit 1
     done
+
+    # Asset banks
+    ${sdcc} -c -mz80 --constseg BANK_2 source/bank_2.c -o build/bank_2.rel
 
     echo ""
     echo "  Linking..."
-    ${sdcc} -o build/Ants.ihx -mz80 --no-std-crt0 --data-loc 0xC000 ${devkitSMS}/crt0/crt0_sms.rel build/*.rel ${SMSlib}/SMSlib.lib || exit 1
+    ${sdcc} -o build/Ants.ihx -mz80 --no-std-crt0 --data-loc 0xC000 -Wl-b_BANK_2=0x8000 \
+        ${devkitSMS}/crt0/crt0_sms.rel \
+        build/code/*.rel \
+        ${SMSlib}/SMSlib.lib \
+        build/bank_2.rel || exit 1
 
     echo ""
     echo "  Generating ROM..."
