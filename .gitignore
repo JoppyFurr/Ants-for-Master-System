@@ -6,4 +6,5 @@ build/
 tile_data/
 !tiles/*.png
 !tools/**
+tools/**/*.o
 

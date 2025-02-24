@@ -1,4 +1,5 @@
-﻿#include "FileReader.h"
+﻿#include <cstdint>
+#include "FileReader.h"
 #include "Endian.h"
 #include "FourCC.h"
 #include <sstream>
@@ -35,7 +36,7 @@ uint32_t FileReader::read32()
             (v << 8 & 0x00ff0000) | (v << 24 & 0xff000000);
     }
     return v;
-} 
+}
 
 uint16_t FileReader::read16()
 {

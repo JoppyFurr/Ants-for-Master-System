@@ -7,7 +7,24 @@ sdcc="${HOME}/Code/sdcc-4.2.0/bin/sdcc"
 devkitSMS="${HOME}/Code/devkitSMS"
 SMSlib="${devkitSMS}/SMSlib"
 ihx2sms="${devkitSMS}/ihx2sms/Linux/ihx2sms"
+pcmenc="./tools/pcmenc/encoder/pcmenc"
 sneptile="./tools/Sneptile-0.10.0/Sneptile"
+
+build_pcmenc ()
+{
+    # Early return if we've already got an up-to-date build
+    if [ -e $pcmenc -a "./tools/pcmenc/encoder/pcmenc.cpp" -ot $pcmenc ]
+    then
+        return
+    fi
+
+    echo "Building pcmenc..."
+    (
+        cd "tools/pcmenc/encoder"
+        make
+        echo ""
+    )
+}
 
 build_sneptile ()
 {
@@ -77,5 +94,6 @@ build_ants_for_master_system ()
 # Clean up any old build artefacts
 rm -rf build
 
+build_pcmenc
 build_sneptile
 build_ants_for_master_system
