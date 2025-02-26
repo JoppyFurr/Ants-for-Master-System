@@ -72,6 +72,10 @@ build_ants_for_master_system ()
             -o "build/code/${file}.rel" "source/${file}.c" || exit 1
     done
 
+    # Libraries
+    ${sdcc} -c -mz80 --peep-file ${devkitSMS}/SMSlib/src/peep-rules.txt -I ${SMSlib}/src \
+        -o "build/code/fxsample.rel" "libraries/sms-fxsample/fxsample.c" || exit 1
+
     # Asset banks
     ${sdcc} -c -mz80 --constseg BANK_2 source/bank_2.c -o build/bank_2.rel
 
