@@ -8,11 +8,14 @@
 #include <string.h>
 
 #include "SMSlib.h"
+#include "../libraries/sms-fxsample/fxsample.h"
 
 #define TARGET_SMS
 #include "bank_2.h"
 #include "../tile_data/palette.h"
 #include "../tile_data/pattern_index.h"
+
+#include "../sound_data/card.h"
 
 #include "vram.h"
 #include "cards.h"
@@ -233,6 +236,9 @@ void card_slide_to (uint16_t end_x, uint16_t end_y)
     x = slide_start_x << 5;
     y = slide_start_y << 5;
 
+    /* Play the card sound with each animation. */
+    PlaySample ((void *) card_sound);
+
     for (uint8_t frame = 0; frame < 32; frame++)
     {
         x += end_x - slide_start_x;
@@ -280,10 +286,15 @@ void delay_frames (uint8_t frames)
  */
 void main (void)
 {
+    const uint8_t psg_init [] = {
+        0x9f, 0xbf, 0xdf, 0xff, 0x81, 0x00, 0xa1, 0x00, 0xc1, 0x00, 0xe0
+    };
+
     /* Setup */
     SMS_loadBGPalette (background_palette);
     SMS_loadSpritePalette (sprite_palette);
     SMS_setBackdropColor (0);
+    initPSG ((void *) psg_init);
     SMS_mapROMBank (2); /* For now, we use only a single bank. */
 
     /* Copy the static patterns into VRAM, but not the cards. There are too many

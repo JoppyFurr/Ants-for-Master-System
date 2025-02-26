@@ -52,7 +52,7 @@ build_ants_for_master_system ()
         # Background palette [0] is black (background colour)
         # Background palette [1] is white (digit printing)
         # Background palette [2] is yellow (digit printing)
-        $sneptile --sprites --output-dir tile_data \
+        ${sneptile} --sprites --output-dir tile_data \
             --background-palette 0x00 0x3f 0x1f \
             --sprite-palette 0x00 \
             --panels 4x2,4 tiles/player.png \
@@ -60,8 +60,23 @@ build_ants_for_master_system ()
             --panels 6x3,2 tiles/castles.png \
             --panels 1x2,2 tiles/fence.png \
             --panels 4x6,32 tiles/cards.png
-
     )
+
+    mkdir -p sound_data
+    echo "  Generating sound data..."
+    for sound in card
+    do
+        ${pcmenc} -rto 1 -dt1 12 -dt2 12 -dt3 423 "./sounds/${sound}.wav"
+        mv "./sounds/${sound}.wav.pcmenc" "./sound_data/${sound}_sound"
+        (
+            cd "./sound_data/"
+            xxd --include "${sound}_sound" > ${sound}.h
+            sed -e "s/unsigned char/const uint8_t/" \
+                -e "s/unsigned int/const uint16_t/" \
+                --in-place ${sound}.h
+        )
+        rm "./sound_data/${sound}_sound"
+    done
 
     mkdir -p build/code
     echo "  Compiling..."
