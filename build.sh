@@ -66,6 +66,13 @@ build_ants_for_master_system ()
     echo "  Generating sound data..."
     for sound in card
     do
+        # Don't process sounds that are already up to date
+        if [ -e "./sound_data/${sound}.h" -a "./sounds/${sound}.wav" -ot "./sound_data/${sound}.h" ]
+        then
+            continue
+        fi
+
+        # Convert with pcmenc, then store the sound data in a C header file.
         ${pcmenc} -rto 1 -dt1 12 -dt2 12 -dt3 423 "./sounds/${sound}.wav"
         mv "./sounds/${sound}.wav.pcmenc" "./sound_data/${sound}_sound"
         (
