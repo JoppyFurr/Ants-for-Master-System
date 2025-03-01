@@ -64,7 +64,8 @@ build_ants_for_master_system ()
 
     mkdir -p sound_data
     echo "  Generating sound data..."
-    for sound in card
+    for sound in card build-castle ruin-castle build-fence ruin-fence \
+                 increase-stocks decrease-stocks increase-power curse
     do
         # Don't process sounds that are already up to date
         if [ -e "./sound_data/${sound}.h" -a "./sounds/${sound}.wav" -ot "./sound_data/${sound}.h" ]
