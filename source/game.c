@@ -17,6 +17,7 @@
 #include "castle.h"
 #include "panel.h"
 #include "game.h"
+#include "sound.h"
 
 #define MIN(X,Y) (((X) < (Y)) ? X : Y)
 
@@ -32,6 +33,7 @@ uint8_t player = 0;
 card_t hands [2] [8];
 uint16_t resources [2] [FIELD_MAX];
 uint8_t empty_slot = 0;
+bool castle_damaged = false;
 
 /* Starting resources */
 const uint16_t starting_resources [8] = {
@@ -134,6 +136,7 @@ static void attack_enemy (uint16_t count)
     if (resources [enemy] [FENCE] >= count)
     {
         resources [enemy] [FENCE] -= count;
+        castle_damaged = false;
         return;
     }
 
@@ -141,6 +144,7 @@ static void attack_enemy (uint16_t count)
     count -= resources [enemy] [FENCE];
     resources [enemy] [FENCE] = 0;
     resource_subtract (&resources [enemy] [CASTLE], count);
+    castle_damaged = true;
 }
 
 
@@ -318,6 +322,71 @@ static void play_card (uint8_t slot)
     fence_update ();
     panel_update ();
     empty_slot = slot;
+
+    switch (card)
+    {
+        case CARD_BASE:
+        case CARD_RESERVE:
+        case CARD_TOWER:
+        case CARD_WAIN:
+        case CARD_FORT:
+        case CARD_BABYLON:
+        case CARD_PIXIES:
+            play_build_castle_sound ();
+            break;
+
+        case CARD_SWAT:
+            play_ruin_castle_sound ();
+            break;
+
+        case CARD_WALL:
+        case CARD_DEFENCE:
+        case CARD_FENCE:
+            play_build_fence_sound ();
+            break;
+
+        case CARD_SCHOOL:
+        case CARD_RECRUIT:
+        case CARD_SORCERER:
+            play_increase_power_sound ();
+            break;
+
+        case CARD_CONJURE_BRICKS:
+        case CARD_CONJURE_WEAPONS:
+        case CARD_CONJURE_CRYSTALS:
+        case CARD_THIEF:
+            play_increase_stocks_sound ();
+            break;
+
+        case CARD_CRUSH_BRICKS:
+        case CARD_CRUSH_WEAPONS:
+        case CARD_CRUSH_CRYSTALS:
+        case CARD_SABOTEUR:
+            play_decrease_stocks_sound ();
+            break;
+
+            /* TODO */
+        case CARD_ARCHER:
+        case CARD_KNIGHT:
+        case CARD_RIDER:
+        case CARD_PLATOON:
+        case CARD_ATTACK:
+        case CARD_BANSHEE:
+        case CARD_DRAGON:
+            if (castle_damaged)
+            {
+                play_ruin_castle_sound ();
+            }
+            else
+            {
+                play_ruin_fence_sound ();
+            }
+            break;
+
+        case CARD_CURSE:
+        default:
+            break;
+    }
 }
 
 

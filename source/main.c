@@ -15,13 +15,12 @@
 #include "../tile_data/palette.h"
 #include "../tile_data/pattern_index.h"
 
-#include "../sound_data/card.h"
-
 #include "vram.h"
 #include "cards.h"
 #include "game.h"
 #include "save.h"
 #include "rng.h"
+#include "sound.h"
 
 uint16_t player_patterns_start = 0;
 uint16_t panel_patterns_start = 0;
@@ -237,7 +236,7 @@ void card_slide_to (uint16_t end_x, uint16_t end_y)
     y = slide_start_y << 5;
 
     /* Play the card sound with each animation. */
-    PlaySample ((void *) card_sound);
+    play_card_sound ();
 
     for (uint8_t frame = 0; frame < 32; frame++)
     {
@@ -295,7 +294,7 @@ void main (void)
     SMS_loadSpritePalette (sprite_palette);
     SMS_setBackdropColor (0);
     initPSG ((void *) psg_init);
-    SMS_mapROMBank (2); /* For now, we use only a single bank. */
+    SMS_mapROMBank (2); /* By default, keep the VDP patterns mapped */
 
     /* Copy the static patterns into VRAM, but not the cards. There are too many
      * cards to fit in VRAM at once, so they will be loaded as needed. */

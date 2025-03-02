@@ -3,6 +3,8 @@
 *.zip
 *.png
 build/
+mockups/
+sound_data/
 tile_data/
 !tiles/*.png
 !tools/**

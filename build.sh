@@ -88,7 +88,7 @@ build_ants_for_master_system ()
 
     mkdir -p build/code
     echo "  Compiling..."
-    for file in main game castle panel rng save
+    for file in main game castle panel sound rng save
     do
         echo "   -> ${file}.c"
         ${sdcc} -c -mz80 --peep-file ${devkitSMS}/SMSlib/src/peep-rules.txt -I ${SMSlib}/src \
@@ -101,14 +101,21 @@ build_ants_for_master_system ()
 
     # Asset banks
     ${sdcc} -c -mz80 --constseg BANK_2 source/bank_2.c -o build/bank_2.rel
+    ${sdcc} -c -mz80 --constseg BANK_3 source/bank_3.c -o build/bank_3.rel
+    ${sdcc} -c -mz80 --constseg BANK_4 source/bank_4.c -o build/bank_4.rel
+    ${sdcc} -c -mz80 --constseg BANK_5 source/bank_5.c -o build/bank_5.rel
+    ${sdcc} -c -mz80 --constseg BANK_6 source/bank_6.c -o build/bank_6.rel
 
     echo ""
     echo "  Linking..."
-    ${sdcc} -o build/Ants.ihx -mz80 --no-std-crt0 --data-loc 0xC000 -Wl-b_BANK_2=0x8000 \
+    ${sdcc} -o build/Ants.ihx -mz80 --no-std-crt0 --data-loc 0xC000 \
+        -Wl-b_BANK_2=0x8000 -Wl-b_BANK_3=0x8000 -Wl-b_BANK_4=0x8000 \
+        -Wl-b_BANK_5=0x8000 -Wl-b_BANK_6=0x8000 \
         ${devkitSMS}/crt0/crt0_sms.rel \
         build/code/*.rel \
         ${SMSlib}/SMSlib.lib \
-        build/bank_2.rel || exit 1
+        build/bank_2.rel build/bank_3.rel build/bank_4.rel \
+        build/bank_5.rel build/bank_6.rel || exit 1
 
     echo ""
     echo "  Generating ROM..."
