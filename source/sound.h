@@ -28,3 +28,6 @@ void play_increase_stocks_sound (void);
 
 /* Play the decrease-stocks sound. */
 void play_decrease_stocks_sound (void);
+
+/* Play the decrease-stocks sound. */
+void play_curse_sound (void);

@@ -18,6 +18,7 @@ extern const uint8_t ruin_castle_sound [];
 extern const uint8_t ruin_fence_sound [];
 extern const uint8_t increase_stocks_sound [];
 extern const uint8_t decrease_stocks_sound [];
+extern const uint8_t curse_sound [];
 
 /*
  * Play the card-slide sound.
@@ -103,5 +104,16 @@ void play_decrease_stocks_sound (void)
 {
     SMS_mapROMBank (6);
     PlaySample ((void *) decrease_stocks_sound);
+    SMS_mapROMBank (2); /* By default, keep the VDP patterns mapped */
+}
+
+
+/*
+ * Play the decrease-stocks sound.
+ */
+void play_curse_sound (void)
+{
+    SMS_mapROMBank (7);
+    PlaySample ((void *) curse_sound);
     SMS_mapROMBank (2); /* By default, keep the VDP patterns mapped */
 }

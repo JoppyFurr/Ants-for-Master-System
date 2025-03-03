@@ -384,6 +384,9 @@ static void play_card (uint8_t slot)
             break;
 
         case CARD_CURSE:
+            play_curse_sound ();
+            break;
+
         default:
             break;
     }
