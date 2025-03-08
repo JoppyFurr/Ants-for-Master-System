@@ -154,6 +154,8 @@ static void attack_enemy (uint16_t count)
 static void play_card (uint8_t slot)
 {
     card_t card = hands [player] [slot];
+    hands [player] [slot] = CARD_NONE;
+    empty_slot = slot;
 
     /* Subtract cost */
     uint8_t cost_unit = card_data [card].cost_unit;
@@ -321,7 +323,6 @@ static void play_card (uint8_t slot)
     castle_update ();
     fence_update ();
     panel_update ();
-    empty_slot = slot;
 
     switch (card)
     {
@@ -395,14 +396,12 @@ static void play_card (uint8_t slot)
 
 /*
  * Discard a card from the active player's hand.
- *
- * TODO: Discarded cards should look different to played cards.
- *       In the original Ants, the card is dim and has DISCARD
- *       written in yellow over the card.
  */
 static void discard_card (uint8_t slot)
 {
     card_t card = hands [player] [slot];
+    hands [player] [slot] = CARD_NONE;
+    empty_slot = slot;
 
     /* Animate */
     card_slide_from (slot << 5, HAND_Y_SPRITE, card | DISCARD_BIT, slot);
@@ -410,8 +409,23 @@ static void discard_card (uint8_t slot)
     card_slide_to (DISCARD_X_SPRITE, DISCARD_Y_SPRITE);
     render_card_as_background (DISCARD_X_TILE, DISCARD_Y_TILE, card | DISCARD_BIT, 8);
     card_slide_done ();
+}
 
-    empty_slot = slot;
+
+/*
+ * Slide a card off-screen, used at the end of a game.
+ * TODO: Slower animation
+ */
+static void clear_card (uint8_t slot)
+{
+    card_t card = hands [player] [slot];
+    hands [player] [slot] = CARD_NONE;
+
+    /* Animate */
+    card_slide_from (slot << 5, HAND_Y_SPRITE, card, slot);
+    render_card_as_background (slot << 2, HAND_Y_TILE, CARD_NONE, slot);
+    card_slide_to (slot << 5, 192);
+    card_slide_done ();
 }
 
 
@@ -530,65 +544,93 @@ static void ai_move (void)
  */
 void game_start (void)
 {
-    /* Clear hands and reset to starting resources */
-    memset (hands [0], CARD_NONE, sizeof (hands [0]));
-    memset (hands [1], CARD_NONE, sizeof (hands [1]));
-    memcpy (resources [0], starting_resources, sizeof (resources [0]));
-    memcpy (resources [1], starting_resources, sizeof (resources [1]));
-
-    /* Draw side panels */
-    panel_init ();
-    panel_update ();
-
-    /* Draw / discard area */
+    /* Draw the draw deck and side panels */
     render_card_as_background (12, 0, CARD_BACK, 9);
     render_card_as_background (16, 0, CARD_NONE, 8);
+    panel_init ();
 
-    /* Draw player indicator */
-    panel_update_player (0);
-
-    /* Initial castle and fences */
-    castle_update ();
-    fence_update ();
-
-    /* Deal Player 1 */
-    set_player (0);
-    for (uint8_t i = 0; i < 8; i++)
+    /* Outer loop - Ensures that when one game is completed, another begins */
+    /* TODO - Starting player:
+     *   -> For a 1-player game, the human is always the first player.
+     *   -> Otherwise, the first player is randomised.
+     */
+    while (true)
     {
-        draw_card (i, false);
-    }
-    delay_frames (60);
+        /* Set up for a new game */
+        /* Clear hands and reset to starting resources */
+        memset (hands [0], CARD_NONE, sizeof (hands [0]));
+        memset (hands [1], CARD_NONE, sizeof (hands [1]));
+        memcpy (resources [0], starting_resources, sizeof (resources [0]));
+        memcpy (resources [1], starting_resources, sizeof (resources [1]));
 
-    /* Deal Player 2 */
-    set_player (1);
-    for (uint8_t i = 0; i < 8; i++)
-    {
-        draw_card (i, true);
-    }
-    delay_frames (60);
+        /* Draw the starting values into the panel, castle, and fence. */
+        panel_update ();
+        castle_update ();
+        fence_update ();
 
-    /* The player who starts does not generate
-     * resources on their first turn. */
-    bool generate = false;
+        /* Draw player indicator */
+        panel_update_player (0);
 
-    while (1)
-    {
-        /* Change player */
-        set_player (!player);
-        if (generate)
+        /* Deal Player 1 */
+        /* TODO: Fast-draw cards during deal? */
+        set_player (0);
+        for (uint8_t i = 0; i < 8; i++)
         {
-            generate_resources ();
+            draw_card (i, false);
         }
         delay_frames (60);
 
-        /* For now both players are computers */
-        ai_move ();
-        delay_frames (30);
+        /* Deal Player 2 */
+        set_player (1);
+        for (uint8_t i = 0; i < 8; i++)
+        {
+            draw_card (i, true);
+        }
+        delay_frames (60);
 
-        draw_card (empty_slot, (player == 1));
-        delay_frames (30);
+        /* The player who starts does not generate
+         * resources on their first turn. */
+        bool first = true;
 
-        generate = true;
+        /* Inner loop - Runs for one game */
+        while (true)
+        {
+            /* Change player */
+            set_player (!player);
+            if (first)
+            {
+                /* Start the game with the increase-power sound */
+                play_increase_power_sound ();
+                first = false;
+            }
+            else
+            {
+                generate_resources ();
+            }
+            delay_frames (60);
+
+            /* For now both players are computers */
+            ai_move ();
+            delay_frames (30);
+
+            /* Check for win */
+            if (resources [player] [CASTLE] >= 100 || resources [!player] [CASTLE] == 0)
+            {
+                /* TODO: Play trumpet sound */
+                break;
+            }
+
+            draw_card (empty_slot, (player == 1));
+            delay_frames (30);
+        }
+
+        /* Tidy up after the completed game */
+        for (uint8_t card = 0; card < 8; card++)
+        {
+            if (hands [player] [card] != CARD_NONE)
+            {
+                clear_card (card);
+            }
+        }
     }
-
 }
