@@ -24,6 +24,7 @@
 /* External functions */
 extern void card_slide_from (uint16_t start_x, uint16_t start_y, card_t card, uint8_t slot);
 extern void card_slide_to (uint16_t end_x, uint16_t end_y);
+extern void card_slide_to_fast (uint16_t end_x, uint16_t end_y);
 extern void card_slide_done (void);
 extern void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_t slot);
 extern void delay_frames (uint8_t frames);
@@ -51,7 +52,7 @@ const uint16_t starting_resources [8] = {
 /*
  * Draw a card and place it into the active player's hand.
  */
-static void draw_card (uint8_t slot, bool hidden)
+static void draw_card (uint8_t slot, bool hidden, bool fast)
 {
     uint16_t r = rand ();
     card_t card = 0;
@@ -89,7 +90,14 @@ static void draw_card (uint8_t slot, bool hidden)
     }
 
     card_slide_from (DRAW_X_SPRITE, DRAW_Y_SPRITE, card, slot);
-    card_slide_to (slot << 5, HAND_Y_SPRITE);
+    if (fast)
+    {
+        card_slide_to_fast (slot << 5, HAND_Y_SPRITE);
+    }
+    else
+    {
+        card_slide_to (slot << 5, HAND_Y_SPRITE);
+    }
     render_card_as_background (slot << 2, HAND_Y_TILE, card, slot);
     card_slide_done ();
 }
@@ -414,17 +422,21 @@ static void discard_card (uint8_t slot)
 
 /*
  * Slide a card off-screen, used at the end of a game.
- * TODO: Slower animation
  */
-static void clear_card (uint8_t slot)
+static void clear_card (uint8_t slot, bool hidden)
 {
     card_t card = hands [player] [slot];
     hands [player] [slot] = CARD_NONE;
 
+    if (hidden)
+    {
+        card = CARD_BACK;
+    }
+
     /* Animate */
     card_slide_from (slot << 5, HAND_Y_SPRITE, card, slot);
     render_card_as_background (slot << 2, HAND_Y_TILE, CARD_NONE, slot);
-    card_slide_to (slot << 5, 192);
+    card_slide_to_fast (slot << 5, 192);
     card_slide_done ();
 }
 
@@ -572,11 +584,10 @@ void game_start (void)
         panel_update_player (0);
 
         /* Deal Player 1 */
-        /* TODO: Fast-draw cards during deal? */
         set_player (0);
         for (uint8_t i = 0; i < 8; i++)
         {
-            draw_card (i, false);
+            draw_card (i, false, true);
         }
         delay_frames (60);
 
@@ -584,7 +595,7 @@ void game_start (void)
         set_player (1);
         for (uint8_t i = 0; i < 8; i++)
         {
-            draw_card (i, true);
+            draw_card (i, true, true);
         }
         delay_frames (60);
 
@@ -611,7 +622,7 @@ void game_start (void)
 
             /* For now both players are computers */
             ai_move ();
-            delay_frames (30);
+            delay_frames (15);
 
             /* Check for win */
             if (resources [player] [CASTLE] >= 100 || resources [!player] [CASTLE] == 0)
@@ -620,7 +631,7 @@ void game_start (void)
                 break;
             }
 
-            draw_card (empty_slot, (player == 1));
+            draw_card (empty_slot, (player == 1), false);
             delay_frames (30);
         }
 
@@ -629,7 +640,7 @@ void game_start (void)
         {
             if (hands [player] [card] != CARD_NONE)
             {
-                clear_card (card);
+                clear_card (card, (player == 1));
             }
         }
     }

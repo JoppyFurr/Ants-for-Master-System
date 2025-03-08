@@ -257,6 +257,39 @@ void card_slide_to (uint16_t end_x, uint16_t end_y)
 
 
 /*
+ * Animate a card sliding from the start position to the end
+ * position, leaving it rendered as a sprite.
+ */
+void card_slide_to_fast (uint16_t end_x, uint16_t end_y)
+{
+    uint16_t x;
+    uint16_t y;
+
+    x = slide_start_x << 4;
+    y = slide_start_y << 4;
+
+    /* Play the card sound with each animation. */
+    play_card_sound ();
+
+    for (uint8_t frame = 0; frame < 16; frame++)
+    {
+        x += end_x - slide_start_x;
+        y += end_y - slide_start_y;
+
+        SMS_initSprites ();
+        render_card_as_sprite (x >> 4, y >> 4);
+
+        /* Write the new sprite position only during vblank. */
+        SMS_waitForVBlank ();
+        SMS_copySpritestoSAT ();
+    }
+
+    /* Note, we don't clear the sprite here. First the
+     * caller needs to draw the card into the background. */
+}
+
+
+/*
  * Clear the card sprite animation. This should be called
  * once the card has been drawn to the background.
  */
