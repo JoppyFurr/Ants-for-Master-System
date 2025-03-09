@@ -627,7 +627,8 @@ void game_start (void)
             /* Check for win */
             if (resources [player] [CASTLE] >= 100 || resources [!player] [CASTLE] == 0)
             {
-                /* TODO: Play trumpet sound */
+                /* TODO: trumpet sprite */
+                play_fanfare_sound ();
                 break;
             }
 

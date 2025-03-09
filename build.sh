@@ -80,8 +80,32 @@ build_ants_for_master_system ()
             cd "./sound_data/"
             xxd --include "${sound}_sound" > ${sound}.h
             sed -e "s/unsigned char/const uint8_t/" \
-                -e "s/unsigned int/const uint16_t/" \
+                -e "/unsigned int/d" \
                 --in-place ${sound}.h
+        )
+        rm "./sound_data/${sound}_sound"
+    done
+
+    # Fanfare doesn't fit in a single bank, so split it
+    for sound in fanfare
+    do
+        # Don't process sounds that are already up to date
+        if [ -e "./sound_data/${sound}_1.h" -a "./sounds/${sound}.wav" -ot "./sound_data/${sound}_1.h" ]
+        then
+            continue
+        fi
+
+        # Convert with pcmenc, splitting to 16 KiB of sample data per C header file.
+        ${pcmenc} -rto 1 -dt1 12 -dt2 12 -dt3 423 "./sounds/fanfare.wav" -r 16
+        mv "./sounds/${sound}.wav.pcmenc" "./sound_data/${sound}_sound"
+        (
+            cd "./sound_data/"
+            xxd --include -l 16384 -n "${sound}_sound_1" "${sound}_sound" > ${sound}_1.h
+            xxd --include -s 16384 -n "${sound}_sound_2" "${sound}_sound" > ${sound}_2.h
+            sed -e "s/unsigned char/const uint8_t/" \
+                -e "/unsigned int/d" \
+                --in-place ${sound}_1.h \
+                --in-place ${sound}_2.h
         )
         rm "./sound_data/${sound}_sound"
     done
@@ -100,23 +124,23 @@ build_ants_for_master_system ()
         -o "build/code/fxsample.rel" "libraries/sms-fxsample/fxsample.c" || exit 1
 
     # Asset banks
-    ${sdcc} -c -mz80 --constseg BANK_2 source/bank_2.c -o build/bank_2.rel
-    ${sdcc} -c -mz80 --constseg BANK_3 source/bank_3.c -o build/bank_3.rel
-    ${sdcc} -c -mz80 --constseg BANK_4 source/bank_4.c -o build/bank_4.rel
-    ${sdcc} -c -mz80 --constseg BANK_5 source/bank_5.c -o build/bank_5.rel
-    ${sdcc} -c -mz80 --constseg BANK_6 source/bank_6.c -o build/bank_6.rel
-    ${sdcc} -c -mz80 --constseg BANK_7 source/bank_7.c -o build/bank_7.rel
+    for bank in 2 3 4 5 6 7 8 9
+    do
+        ${sdcc} -c -mz80 --constseg BANK_${bank} source/bank_${bank}.c -o build/bank_${bank}.rel
+    done
 
     echo ""
     echo "  Linking..."
     ${sdcc} -o build/Ants.ihx -mz80 --no-std-crt0 --data-loc 0xC000 \
         -Wl-b_BANK_2=0x8000 -Wl-b_BANK_3=0x8000 -Wl-b_BANK_4=0x8000 \
         -Wl-b_BANK_5=0x8000 -Wl-b_BANK_6=0x8000 -Wl-b_BANK_7=0x8000 \
+        -Wl-b_BANK_8=0x8000 -Wl-b_BANK_9=0x8000  \
         ${devkitSMS}/crt0/crt0_sms.rel \
         build/code/*.rel \
         ${SMSlib}/SMSlib.lib \
         build/bank_2.rel build/bank_3.rel build/bank_4.rel \
-        build/bank_5.rel build/bank_6.rel build/bank_7.rel || exit 1
+        build/bank_5.rel build/bank_6.rel build/bank_7.rel \
+        build/bank_8.rel build/bank_9.rel || exit 1
 
     echo ""
     echo "  Generating ROM..."

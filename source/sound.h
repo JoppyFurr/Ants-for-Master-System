@@ -31,3 +31,6 @@ void play_decrease_stocks_sound (void);
 
 /* Play the decrease-stocks sound. */
 void play_curse_sound (void);
+
+/* Play the fanfare sound. */
+void play_fanfare_sound (void);
