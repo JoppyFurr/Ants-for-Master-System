@@ -5,7 +5,7 @@
 
 /*
  * Title screen VRAM layout:
- *   [  0..359] - Title image
+ *   [  0..396] - Title image
  */
 #define PATTERN_TITLE_IMAGE         0
 
