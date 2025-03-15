@@ -6,4 +6,5 @@
  */
 
 #include <stdint.h>
-#include "../sound_data/curse.h"
+#include "../sound_data/increase-stocks.h"
+#include "../sound_data/decrease-stocks.h"

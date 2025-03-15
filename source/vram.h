@@ -1,8 +1,16 @@
 /*
  * Ants for Master System
  * An Ants clone for the Sega Master System
- *
- * VRAM Layout:
+ */
+
+/*
+ * Title screen VRAM layout:
+ *   [  0..359] - Title image
+ */
+#define PATTERN_TITLE_IMAGE         0
+
+/*
+ * Gameplay VRAM Layout:
  *
  *   [       0] - Blank pattern
  *   [  1..240] - ten-card dynamic buffer

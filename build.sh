@@ -46,13 +46,22 @@ build_ants_for_master_system ()
     echo "Building Ants for Master System..."
 
     echo "  Generating tile data..."
-    mkdir -p tile_data
+    mkdir -p title_tile_data
+    (
+        # Sprite palette [0] is black (background colour)
+        # Background palette [0] is black (background colour)
+        ${sneptile} --sprites --output-dir title_tile_data \
+            --background-palette 0x00 \
+            --sprite-palette 0x00 \
+            --background tiles/title.png
+    )
+    mkdir -p game_tile_data
     (
         # Sprite palette [0] is black (background colour)
         # Background palette [0] is black (background colour)
         # Background palette [1] is white (digit printing)
         # Background palette [2] is yellow (digit printing)
-        ${sneptile} --sprites --output-dir tile_data \
+        ${sneptile} --sprites --output-dir game_tile_data \
             --background-palette 0x00 0x3f 0x1f \
             --sprite-palette 0x00 \
             --panels 4x2,4 tiles/player.png \
@@ -112,7 +121,7 @@ build_ants_for_master_system ()
 
     mkdir -p build/code
     echo "  Compiling..."
-    for file in main game castle panel sound rng save
+    for file in main title game castle panel sound rng save
     do
         echo "   -> ${file}.c"
         ${sdcc} -c -mz80 --peep-file ${devkitSMS}/SMSlib/src/peep-rules.txt -I ${SMSlib}/src \
@@ -124,7 +133,7 @@ build_ants_for_master_system ()
         -o "build/code/fxsample.rel" "libraries/sms-fxsample/fxsample.c" || exit 1
 
     # Asset banks
-    for bank in 2 3 4 5 6 7 8 9
+    for bank in 2 3 4 5 6 7 8 9 10
     do
         ${sdcc} -c -mz80 --constseg BANK_${bank} source/bank_${bank}.c -o build/bank_${bank}.rel
     done
@@ -134,13 +143,13 @@ build_ants_for_master_system ()
     ${sdcc} -o build/Ants.ihx -mz80 --no-std-crt0 --data-loc 0xC000 \
         -Wl-b_BANK_2=0x8000 -Wl-b_BANK_3=0x8000 -Wl-b_BANK_4=0x8000 \
         -Wl-b_BANK_5=0x8000 -Wl-b_BANK_6=0x8000 -Wl-b_BANK_7=0x8000 \
-        -Wl-b_BANK_8=0x8000 -Wl-b_BANK_9=0x8000  \
+        -Wl-b_BANK_8=0x8000 -Wl-b_BANK_9=0x8000 -Wl-b_BANK_10=0x8000 \
         ${devkitSMS}/crt0/crt0_sms.rel \
         build/code/*.rel \
         ${SMSlib}/SMSlib.lib \
         build/bank_2.rel build/bank_3.rel build/bank_4.rel \
         build/bank_5.rel build/bank_6.rel build/bank_7.rel \
-        build/bank_8.rel build/bank_9.rel || exit 1
+        build/bank_8.rel build/bank_9.rel build/bank_10.rel || exit 1
 
     echo ""
     echo "  Generating ROM..."

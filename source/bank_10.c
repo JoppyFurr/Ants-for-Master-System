@@ -6,5 +6,4 @@
  */
 
 #include <stdint.h>
-#include "../sound_data/card.h"
-#include "../sound_data/increase-power.h"
+#include "../sound_data/fanfare_2.h"

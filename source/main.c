@@ -11,9 +11,9 @@
 #include "../libraries/sms-fxsample/fxsample.h"
 
 #define TARGET_SMS
-#include "bank_2.h"
-#include "../tile_data/palette.h"
-#include "../tile_data/pattern_index.h"
+#include "bank_3.h"
+#include "../game_tile_data/palette.h"
+#include "../game_tile_data/pattern_index.h"
 
 #include "vram.h"
 #include "cards.h"
@@ -21,6 +21,7 @@
 #include "save.h"
 #include "rng.h"
 #include "sound.h"
+#include "title.h"
 
 uint16_t player_patterns_start = 0;
 uint16_t panel_patterns_start = 0;
@@ -321,13 +322,20 @@ void main (void)
     const uint8_t psg_init [] = {
         0x9f, 0xbf, 0xdf, 0xff, 0x81, 0x00, 0xa1, 0x00, 0xc1, 0x00, 0xe0
     };
+    initPSG ((void *) psg_init);
 
-    /* Setup */
+    sram_load ();
+    rng_seed ();
+
+    /* Run title screen */
+    title_screen ();
+    SMS_displayOff ();
+
+    /* Setup for gameplay */
     SMS_loadBGPalette (background_palette);
     SMS_loadSpritePalette (sprite_palette);
     SMS_setBackdropColor (0);
-    initPSG ((void *) psg_init);
-    SMS_mapROMBank (2); /* By default, keep the VDP patterns mapped */
+    SMS_mapROMBank (3); /* By default, keep the gameplay VDP patterns mapped */
 
     /* Copy the static patterns into VRAM, but not the cards. There are too many
      * cards to fit in VRAM at once, so they will be loaded as needed. */
@@ -347,9 +355,6 @@ void main (void)
     SMS_copySpritestoSAT ();
 
     SMS_displayOn ();
-
-    sram_load ();
-    rng_seed ();
 
     while (true)
     {
