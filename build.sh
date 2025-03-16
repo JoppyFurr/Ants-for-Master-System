@@ -53,6 +53,7 @@ build_ants_for_master_system ()
         ${sneptile} --sprites --output-dir title_tile_data \
             --background-palette 0x00 \
             --sprite-palette 0x00 \
+            --panels 2x2,2 tiles/cursor.png \
             --background tiles/title.png
     )
     mkdir -p game_tile_data

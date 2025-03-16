@@ -183,7 +183,6 @@ static inline void render_card_as_sprite (uint16_t x, uint16_t y)
     {
         SMS_addSprite (x + (panel_x << 3),
                        y + (panel_y << 3), card_buffer [card_buffer_sprite] [pattern_index++]);
-
     }
 }
 
