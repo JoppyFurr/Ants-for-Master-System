@@ -12,6 +12,7 @@
 
 #include "SMSlib.h"
 
+#include "vram.h"
 #define INCLUDE_CARD_DATA
 #include "cards.h"
 #include "castle.h"
@@ -501,6 +502,100 @@ static bool card_valid (card_t card)
 
 
 /*
+ * Draw the gameplay cursor.
+ */
+static void draw_cursor (uint8_t x)
+{
+    x = (x << 5) + 8;
+
+    SMS_initSprites ();
+
+    /* Cursor patterns are loaded at the base of vram */
+    SMS_addSprite (x,     172,     PATTERN_HAND_CURSOR    );
+    SMS_addSprite (x + 8, 172,     PATTERN_HAND_CURSOR + 1);
+    SMS_addSprite (x,     172 + 8, PATTERN_HAND_CURSOR + 2);
+    SMS_addSprite (x + 8, 172 + 8, PATTERN_HAND_CURSOR + 3);
+
+    SMS_copySpritestoSAT ();
+}
+
+
+/*
+ * Clear the cursor.
+ */
+static void clear_cursor (void)
+{
+    SMS_initSprites ();
+    SMS_copySpritestoSAT ();
+}
+
+
+/*
+ * Take player input to select a card.
+ */
+static void human_move (void)
+{
+    /* Keep track of the two player cursor positions separately */
+    static uint8_t cursor_position [2] = { 0, 0 };
+
+    uint16_t player_mask;
+
+    /* For 2-player mode, the reds use the 2nd controller port. */
+    if (player_human [0] && player_human [1] && player == 1)
+    {
+        player_mask = PORT_B_KEY_LEFT | PORT_B_KEY_RIGHT | PORT_B_KEY_1 | PORT_B_KEY_2;
+    }
+    else
+    {
+        player_mask = PORT_A_KEY_LEFT | PORT_A_KEY_RIGHT | PORT_A_KEY_1 | PORT_A_KEY_2;
+    }
+
+    draw_cursor (cursor_position [player]);
+
+    while (true)
+    {
+        uint16_t key_pressed = SMS_getKeysPressed () & player_mask;
+
+        if (key_pressed & (PORT_A_KEY_LEFT | PORT_B_KEY_LEFT))
+        {
+            if (cursor_position [player] > 0)
+            {
+                cursor_position [player] -= 1;
+            }
+            draw_cursor (cursor_position [player]);
+        }
+        else if (key_pressed & (PORT_A_KEY_RIGHT | PORT_B_KEY_RIGHT))
+        {
+            if (cursor_position [player] < 7)
+            {
+                cursor_position [player] += 1;
+            }
+            draw_cursor (cursor_position [player]);
+        }
+        else if (key_pressed & (PORT_A_KEY_1 | PORT_B_KEY_1))
+        {
+            card_t card = hands [player] [cursor_position [player]];
+
+            if (card_valid (card))
+            {
+                clear_cursor ();
+                play_card (cursor_position [player]);
+                return;
+            }
+        }
+        else if (key_pressed & (PORT_A_KEY_2 | PORT_B_KEY_2))
+        {
+            clear_cursor ();
+            discard_card (cursor_position [player]);
+            return;
+        }
+
+        SMS_waitForVBlank ();
+    }
+}
+
+
+/*
  * Select a move for the current player.
  * If the card can be afforded, it is to be played.
  * If the card is too expensive, it is to be discarded.
@@ -629,10 +724,16 @@ void game_start (void)
             {
                 generate_resources ();
             }
-            delay_frames (60);
 
-            /* For now both players are computers */
-            ai_move ();
+            if (player_human [player])
+            {
+                human_move ();
+            }
+            else
+            {
+                delay_frames (30);
+                ai_move ();
+            }
             delay_frames (15);
 
             /* Check for win */

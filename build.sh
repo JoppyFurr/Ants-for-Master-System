@@ -49,10 +49,11 @@ build_ants_for_master_system ()
     mkdir -p title_tile_data
     (
         # Sprite palette [0] is black (background colour)
+        # Sprite palette [1] is white (cursor)
         # Background palette [0] is black (background colour)
         ${sneptile} --sprites --output-dir title_tile_data \
+            --sprite-palette 0x00 0x3f \
             --background-palette 0x00 \
-            --sprite-palette 0x00 \
             --panels 2x2,2 tiles/cursor.png \
             --background tiles/title.png \
             --background --panels 2x1,4 tiles/widgets.png
@@ -60,12 +61,13 @@ build_ants_for_master_system ()
     mkdir -p game_tile_data
     (
         # Sprite palette [0] is black (background colour)
+        # Sprite palette [1] is white (cursor)
         # Background palette [0] is black (background colour)
         # Background palette [1] is white (digit printing)
         # Background palette [2] is yellow (digit printing)
         ${sneptile} --sprites --output-dir game_tile_data \
+            --sprite-palette 0x00 0x3f \
             --background-palette 0x00 0x3f 0x1f \
-            --sprite-palette 0x00 \
             --panels 4x2,4 tiles/player.png \
             --background tiles/panel.png \
             --panels 6x3,2 tiles/castles.png \

@@ -11,6 +11,7 @@
 #include "../libraries/sms-fxsample/fxsample.h"
 
 #define TARGET_SMS
+#include "bank_2.h"
 #include "bank_3.h"
 #include "../game_tile_data/palette.h"
 #include "../game_tile_data/pattern_index.h"
@@ -339,6 +340,11 @@ void main (void)
     /* Copy the static patterns into VRAM, but not the cards. There are too many
      * cards to fit in VRAM at once, so they will be loaded as needed. */
     SMS_loadTiles (blank_pattern, PATTERN_BLANK, sizeof (blank_pattern));
+
+    /* The cursors are stored in bank 2 */
+    SMS_mapROMBank (2);
+    SMS_loadTiles (&cursor_patterns [32], PATTERN_HAND_CURSOR, 128);
+    SMS_mapROMBank (3);
 
     player_patterns_start = STATIC_PATTERNS_START;
     SMS_loadTiles (player_patterns, player_patterns_start, sizeof (player_patterns));
