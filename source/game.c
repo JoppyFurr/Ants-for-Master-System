@@ -29,6 +29,10 @@ extern void card_slide_done (void);
 extern void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_t slot);
 extern void delay_frames (uint8_t frames);
 
+/* Game Settings */
+bool infinite_game = false;
+bool player_visible [2] = { true, false };
+
 /* Game State */
 uint8_t player = 0;
 card_t hands [2] [8];
@@ -52,7 +56,7 @@ const uint16_t starting_resources [8] = {
 /*
  * Draw a card and place it into the active player's hand.
  */
-static void draw_card (uint8_t slot, bool hidden, bool fast)
+static void draw_card (uint8_t slot, bool fast)
 {
     uint16_t r = rand ();
     card_t card = 0;
@@ -84,7 +88,7 @@ static void draw_card (uint8_t slot, bool hidden, bool fast)
     hands [player] [slot] = card;
 
     /* Animate */
-    if (hidden)
+    if (player_visible [player] == false)
     {
         card = CARD_BACK;
     }
@@ -459,7 +463,7 @@ static void set_player (uint8_t p)
         {
             render_card_as_background (slot << 2, HAND_Y_TILE, CARD_NONE, slot);
         }
-        else if (player == 0)
+        else if (player_visible [player])
         {
             render_card_as_background (slot << 2, HAND_Y_TILE, hand [slot], slot);
         }
@@ -587,7 +591,7 @@ void game_start (void)
         set_player (0);
         for (uint8_t i = 0; i < 8; i++)
         {
-            draw_card (i, false, true);
+            draw_card (i, true);
         }
         delay_frames (60);
 
@@ -595,7 +599,7 @@ void game_start (void)
         set_player (1);
         for (uint8_t i = 0; i < 8; i++)
         {
-            draw_card (i, true, true);
+            draw_card (i, true);
         }
         delay_frames (60);
 
@@ -625,14 +629,17 @@ void game_start (void)
             delay_frames (15);
 
             /* Check for win */
-            if (resources [player] [CASTLE] >= 100 || resources [!player] [CASTLE] == 0)
+            if (infinite_game == false)
             {
-                /* TODO: trumpet sprite */
-                play_fanfare_sound ();
-                break;
+                if (resources [player] [CASTLE] >= 100 || resources [!player] [CASTLE] == 0)
+                {
+                    /* TODO: trumpet sprite */
+                    play_fanfare_sound ();
+                    break;
+                }
             }
 
-            draw_card (empty_slot, (player == 1), false);
+            draw_card (empty_slot, false);
             delay_frames (30);
         }
 

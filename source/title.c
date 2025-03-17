@@ -31,10 +31,12 @@ typedef enum cursor_position_e {
 } cursor_position_t;
 
 
-/* Settings */
-/* TODO: Move result somewhere global. */
+/* Game Settings */
+extern bool infinite_game;
+extern bool player_visible [2];
+
+/* GUI State */
 static cursor_position_t selected_player = CURSOR_POS_BLACKS;
-static bool infinite_game = false;
 
 /* Tile maps */
 static uint16_t vdp_selected_checkbox [2];
@@ -95,14 +97,22 @@ static void select_player (cursor_position_t pos)
     {
         case CURSOR_POS_BLACKS:
             SMS_loadTileMapArea (25, 4, vdp_selected_radio, 2, 1);
+            player_visible [0] = true;
+            player_visible [1] = false;
             break;
         case CURSOR_POS_REDS:
+            player_visible [0] = false;
+            player_visible [1] = true;
             SMS_loadTileMapArea (25, 6, vdp_selected_radio, 2, 1);
             break;
         case CURSOR_POS_2_PLAYER:
+            player_visible [0] = true;
+            player_visible [1] = true;
             SMS_loadTileMapArea (25, 8, vdp_selected_radio, 2, 1);
             break;
         case CURSOR_POS_DEMO:
+            player_visible [0] = true;
+            player_visible [1] = true;
             SMS_loadTileMapArea (25, 10, vdp_selected_radio, 2, 1);
             break;
         default:
