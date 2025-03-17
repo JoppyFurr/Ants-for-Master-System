@@ -32,6 +32,7 @@ extern void delay_frames (uint8_t frames);
 /* Game Settings */
 bool infinite_game = false;
 bool player_visible [2] = { true, false };
+bool player_human [2] = { true, false };
 
 /* Game State */
 uint8_t player = 0;
@@ -378,7 +379,6 @@ static void play_card (uint8_t slot)
             play_decrease_stocks_sound ();
             break;
 
-            /* TODO */
         case CARD_ARCHER:
         case CARD_KNIGHT:
         case CARD_RIDER:
@@ -566,10 +566,6 @@ void game_start (void)
     panel_init ();
 
     /* Outer loop - Ensures that when one game is completed, another begins */
-    /* TODO - Starting player:
-     *   -> For a 1-player game, the human is always the first player.
-     *   -> Otherwise, the first player is randomised.
-     */
     while (true)
     {
         /* Set up for a new game */
@@ -584,19 +580,30 @@ void game_start (void)
         castle_update ();
         fence_update ();
 
-        /* Draw player indicator */
-        panel_update_player (0);
+        /* For a single-player game, the human always goes first.
+         * Otherwise, the first player is randomised. */
+        if (player_human [0] && !player_human [1])
+        {
+            set_player (0);
+        }
+        else if (player_human [1] && !player_human [0])
+        {
+            set_player (1);
+        }
+        else
+        {
+            set_player (rand () & 1);
+        }
 
-        /* Deal Player 1 */
-        set_player (0);
+        /* Deal first player */
         for (uint8_t i = 0; i < 8; i++)
         {
             draw_card (i, true);
         }
         delay_frames (60);
 
-        /* Deal Player 2 */
-        set_player (1);
+        /* Deal second player */
+        set_player (!player);
         for (uint8_t i = 0; i < 8; i++)
         {
             draw_card (i, true);

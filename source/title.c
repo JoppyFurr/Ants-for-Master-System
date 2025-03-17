@@ -34,6 +34,7 @@ typedef enum cursor_position_e {
 /* Game Settings */
 extern bool infinite_game;
 extern bool player_visible [2];
+extern bool player_human [2];
 
 /* GUI State */
 static cursor_position_t selected_player = CURSOR_POS_BLACKS;
@@ -97,20 +98,28 @@ static void select_player (cursor_position_t pos)
     {
         case CURSOR_POS_BLACKS:
             SMS_loadTileMapArea (25, 4, vdp_selected_radio, 2, 1);
+            player_human [0] = true;
+            player_human [1] = false;
             player_visible [0] = true;
             player_visible [1] = false;
             break;
         case CURSOR_POS_REDS:
+            player_human [0] = false;
+            player_human [1] = true;
             player_visible [0] = false;
             player_visible [1] = true;
             SMS_loadTileMapArea (25, 6, vdp_selected_radio, 2, 1);
             break;
         case CURSOR_POS_2_PLAYER:
+            player_human [0] = true;
+            player_human [1] = true;
             player_visible [0] = true;
             player_visible [1] = true;
             SMS_loadTileMapArea (25, 8, vdp_selected_radio, 2, 1);
             break;
         case CURSOR_POS_DEMO:
+            player_human [0] = false;
+            player_human [1] = false;
             player_visible [0] = true;
             player_visible [1] = true;
             SMS_loadTileMapArea (25, 10, vdp_selected_radio, 2, 1);
