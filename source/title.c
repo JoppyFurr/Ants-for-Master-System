@@ -31,6 +31,17 @@ typedef enum cursor_position_e {
 } cursor_position_t;
 
 
+/* Settings */
+/* TODO: Move result somewhere global. */
+static cursor_position_t selected_player = CURSOR_POS_BLACKS;
+static bool infinite_game = false;
+
+/* Tile maps */
+static uint16_t vdp_selected_checkbox [2];
+static uint16_t vdp_unselected_checkbox [2];
+static uint16_t vdp_selected_radio [2];
+static uint16_t vdp_unselected_radio [2];
+
 /*
  * Draw the title screen cursor.
  */
@@ -50,6 +61,70 @@ static void draw_cursor (uint8_t x, uint8_t y)
 
 
 /*
+ * Select one of the four player option radio-buttons.
+ */
+static void select_player (cursor_position_t pos)
+{
+
+    if (pos == selected_player)
+    {
+        return;
+    }
+
+    /* Deselect the previous option */
+    switch (selected_player)
+    {
+        case CURSOR_POS_BLACKS:
+            SMS_loadTileMapArea (25, 4, vdp_unselected_radio, 2, 1);
+            break;
+        case CURSOR_POS_REDS:
+            SMS_loadTileMapArea (25, 6, vdp_unselected_radio, 2, 1);
+            break;
+        case CURSOR_POS_2_PLAYER:
+            SMS_loadTileMapArea (25, 8, vdp_unselected_radio, 2, 1);
+            break;
+        case CURSOR_POS_DEMO:
+            SMS_loadTileMapArea (25, 10, vdp_unselected_radio, 2, 1);
+            break;
+        default:
+            break;
+    }
+
+    /* Select the new option */
+    switch (pos)
+    {
+        case CURSOR_POS_BLACKS:
+            SMS_loadTileMapArea (25, 4, vdp_selected_radio, 2, 1);
+            break;
+        case CURSOR_POS_REDS:
+            SMS_loadTileMapArea (25, 6, vdp_selected_radio, 2, 1);
+            break;
+        case CURSOR_POS_2_PLAYER:
+            SMS_loadTileMapArea (25, 8, vdp_selected_radio, 2, 1);
+            break;
+        case CURSOR_POS_DEMO:
+            SMS_loadTileMapArea (25, 10, vdp_selected_radio, 2, 1);
+            break;
+        default:
+            break;
+    }
+
+    selected_player = pos;
+}
+
+
+/*
+ * Toggle infinite-game
+ */
+static void toggle_infinite (void)
+{
+    infinite_game = !infinite_game;
+
+    SMS_loadTileMapArea (25, 17, infinite_game ? vdp_selected_checkbox : vdp_unselected_checkbox, 2, 1);
+}
+
+
+/*
  * Run the title screen / menu.
  */
 void title_screen (void)
@@ -65,6 +140,7 @@ void title_screen (void)
 
     SMS_loadTiles (cursor_patterns, PATTERN_CURSOR, sizeof (cursor_patterns));
     SMS_loadTiles (title_patterns, PATTERN_TITLE_IMAGE, sizeof (title_patterns));
+    SMS_loadTiles (widgets_patterns, PATTERN_WIDGETS, sizeof (widgets_patterns));
 
     for (uint16_t i = 0; i < 768; i++)
     {
@@ -76,6 +152,16 @@ void title_screen (void)
     draw_cursor (235, 175);
 
     SMS_displayOn ();
+
+    /* Prepare widget tile maps */
+    vdp_unselected_radio [0]    = widgets_panels [0] [0] + PATTERN_WIDGETS;
+    vdp_unselected_radio [1]    = widgets_panels [0] [1] + PATTERN_WIDGETS;
+    vdp_selected_radio [0]      = widgets_panels [1] [0] + PATTERN_WIDGETS;
+    vdp_selected_radio [1]      = widgets_panels [1] [1] + PATTERN_WIDGETS;
+    vdp_unselected_checkbox [0] = widgets_panels [2] [0] + PATTERN_WIDGETS;
+    vdp_unselected_checkbox [1] = widgets_panels [2] [1] + PATTERN_WIDGETS;
+    vdp_selected_checkbox [0]   = widgets_panels [3] [0] + PATTERN_WIDGETS;
+    vdp_selected_checkbox [1]   = widgets_panels [3] [1] + PATTERN_WIDGETS;
 
     /* For now, just wait for the player to press a button */
     while (true)
@@ -119,7 +205,21 @@ void title_screen (void)
 
         if (key_pressed & PORT_A_KEY_MASK)
         {
-            break;
+            switch (cursor_pos)
+            {
+                case CURSOR_POS_BLACKS:
+                case CURSOR_POS_REDS:
+                case CURSOR_POS_2_PLAYER:
+                case CURSOR_POS_DEMO:
+                    select_player (cursor_pos);
+                    break;
+                case CURSOR_POS_INFINITE:
+                    toggle_infinite ();
+                    break;
+                case CURSOR_POS_START:
+                default:
+                    return;
+            }
         }
 
         SMS_waitForVBlank ();

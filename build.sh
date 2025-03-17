@@ -54,7 +54,8 @@ build_ants_for_master_system ()
             --background-palette 0x00 \
             --sprite-palette 0x00 \
             --panels 2x2,2 tiles/cursor.png \
-            --background tiles/title.png
+            --background tiles/title.png \
+            --background --panels 2x1,4 tiles/widgets.png
     )
     mkdir -p game_tile_data
     (
