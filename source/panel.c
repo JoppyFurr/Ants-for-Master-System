@@ -23,7 +23,99 @@ extern const uint32_t panel_patterns [];
 extern uint16_t panel_patterns_start;
 
 /* Game state */
+extern uint16_t wins [2];
 extern uint16_t resources [2] [FIELD_MAX];
+
+
+/*
+ * Update the win counters at the top of the screen.
+ */
+void panel_update_wins (uint8_t player)
+{
+    /* A pair of buffers to hold the patterns we will draw into,
+     * initialised to black. */
+    uint8_t buffer_l [32] = { 0 };
+    uint8_t buffer_r [32] = { 0 };
+
+    const uint16_t value = wins [player];
+    if (value > 999)
+    {
+        /* Stop at three digits. */
+        return;
+    }
+
+    const uint8_t digit_0 = value % 10;           /* Ones */
+    const uint8_t digit_1 = (value % 100) / 10;   /* Tens */
+    const uint8_t digit_2 = value / 100;          /* Hundreds */
+
+    const uint8_t y_offset = 1;
+
+    uint8_t colour_index = 2; /* Green */
+
+    /* Draw the digit font into the pattern */
+    for (uint8_t line = 0; line < 5; line++)
+    {
+        uint8_t font_line_l = 0;
+        uint8_t font_line_r = 0;
+
+        /* One digit */
+        if (value <= 9)
+        {
+            font_line_l = digit_font [digit_0] [line] >> 2;
+            font_line_r = digit_font [digit_0] [line] << 6;
+        }
+        /* Two digits */
+        else if (value <= 99)
+        {
+            font_line_l = digit_font [digit_1] [line];
+            font_line_r = digit_font [digit_0] [line] << 4;
+        }
+        /* Three digits */
+        else
+        {
+            font_line_l = (digit_font [digit_2] [line] << 2) | (digit_font [digit_1] [line] >> 2);
+            font_line_r = (digit_font [digit_1] [line] << 6) | (digit_font [digit_0] [line] << 2);
+        }
+
+        for (uint8_t bitplane = 0; bitplane < 4; bitplane++)
+        {
+            buffer_l [(line + y_offset) * 4 + bitplane] &= ~font_line_l;
+            buffer_r [(line + y_offset) * 4 + bitplane] &= ~font_line_r;
+
+            if (colour_index & (1 << bitplane))
+            {
+                buffer_l [(line + y_offset) * 4 + bitplane] |=  font_line_l;
+                buffer_r [(line + y_offset) * 4 + bitplane] |=  font_line_r;
+            }
+        }
+    }
+
+    /* TODO: Consider waiting for v-sync before writing to VRAM. */
+    SMS_loadTiles (buffer_l, PATTERN_WIN_DIGITS + (player << 1),     sizeof (buffer_l));
+    SMS_loadTiles (buffer_r, PATTERN_WIN_DIGITS + (player << 1) + 1, sizeof (buffer_r));
+}
+
+
+/*
+ * Initialise the win counter.
+ */
+void panel_init_wins (void)
+{
+    const uint16_t blacks_win_digits [2] = {
+        0x0800 | PATTERN_WIN_DIGITS + 0,
+        0x0800 | PATTERN_WIN_DIGITS + 1,
+    };
+    SMS_loadTileMapArea (1, 0, blacks_win_digits, 2, 1);
+
+    const uint16_t reds_win_digits [2] = {
+        0x0800 | PATTERN_WIN_DIGITS + 2,
+        0x0800 | PATTERN_WIN_DIGITS + 3
+    };
+    SMS_loadTileMapArea (29, 0, reds_win_digits, 2, 1);
+
+    panel_update_wins (0);
+    panel_update_wins (1);
+}
 
 
 /*

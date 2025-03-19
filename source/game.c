@@ -36,6 +36,7 @@ bool player_visible [2] = { true, false };
 bool player_human [2] = { true, false };
 
 /* Game State */
+uint16_t wins [2] = { 0, 0 };
 uint8_t player = 0;
 card_t hands [2] [8];
 uint16_t resources [2] [FIELD_MAX];
@@ -658,6 +659,7 @@ void game_start (void)
     /* Draw the draw deck and side panels */
     render_card_as_background (12, 0, CARD_BACK, 9);
     render_card_as_background (16, 0, CARD_NONE, 8);
+    panel_init_wins ();
     panel_init ();
 
     /* Outer loop - Ensures that when one game is completed, another begins */
@@ -741,6 +743,9 @@ void game_start (void)
             {
                 if (resources [player] [CASTLE] >= 100 || resources [!player] [CASTLE] == 0)
                 {
+                    wins [player] += 1;
+                    panel_update_wins (player);
+
                     /* TODO: trumpet sprite */
                     play_fanfare_sound ();
                     break;

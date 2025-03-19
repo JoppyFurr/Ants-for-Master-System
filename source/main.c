@@ -72,7 +72,7 @@ static void card_buffer_prepare (void)
     {
         for (uint8_t pattern = 0; pattern < 24; pattern++)
         {
-            card_buffer [slot] [pattern] = 0x0800 + PATTERN_CARD_BUFFER + index++;
+            card_buffer [slot] [pattern] = 0x0800 | PATTERN_CARD_BUFFER + index++;
         }
     }
 }

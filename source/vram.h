@@ -24,7 +24,8 @@
  *   [307..336] - Castle dynamic buffer (right)
  *   [337..340] - Fence dynamic buffer (left)
  *   [341..344] - Fence dynamic buffer (right)
- *   [345..   ] - Static patterns (72 for now)
+ *   [345..348] - Win-counter digits
+ *   [349..   ] - Static patterns (72 for now)
  */
 
 #define PATTERN_BLANK               0
@@ -35,5 +36,6 @@
 #define PATTERN_CASTLE_2_BUFFER   307
 #define PATTERN_FENCE_1_BUFFER    337
 #define PATTERN_FENCE_2_BUFFER    341
-#define STATIC_PATTERNS_START     345
+#define PATTERN_WIN_DIGITS        345
+#define STATIC_PATTERNS_START     349
 
