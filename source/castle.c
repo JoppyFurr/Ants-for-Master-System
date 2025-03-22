@@ -73,20 +73,30 @@ void castle_update (void)
         uint16_t strip_vram_base = (player == 0) ? PATTERN_CASTLE_1_BUFFER : PATTERN_CASTLE_2_BUFFER;
         uint8_t col_base = (player == 0) ? 6 : 20;
 
+        /* Name-table entries for the vertical strips */
+        uint16_t strip_map [72];
+        memset (strip_map, 0, sizeof (strip_map)); /* Initialise to empty tile */
+
+        /* Pattern entries for this strip */
+        uint8_t pattern_buffer [6] [32 * 5];
+        memset (pattern_buffer, 0, sizeof (pattern_buffer)); /* Initialise to black */
+
+        /* Note: Currently the castle is generated in vertical slices.
+         *       This could probably be reworked to remove the column loop. */
         for (uint8_t col = 0; col < 6; col++)
         {
-            /* Name-table entries for this strip */
-            uint16_t strip_map [12] = { 0 };
             uint16_t pattern_index = 0;
-
-            uint8_t strip_map_index = (12 - tiles_high);
+            uint8_t strip_map_index = col + 6 * (12 - tiles_high);
 
             /* Place the peak (2 or 3 tiles) */
-            strip_map [strip_map_index++] = 0x0800 | strip_vram_base + pattern_index++;
-            strip_map [strip_map_index++] = 0x0800 | strip_vram_base + pattern_index++;
+            strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index++;
+            strip_map_index += 6;
+            strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index++;
+            strip_map_index += 6;
             if (peak_start > 3)
             {
-                strip_map [strip_map_index++] = 0x0800 | strip_vram_base + pattern_index++;
+                strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index++;
+                strip_map_index += 6;
             }
 
             uint8_t body_height_from_peak = (body_height < 5) ? body_height : ((body_height - 5) & 0x07);
@@ -97,7 +107,8 @@ void castle_update (void)
             {
                 while (remaining_body_height > 8)
                 {
-                    strip_map [strip_map_index++] = 0x0800 | strip_vram_base + pattern_index;
+                    strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index;
+                    strip_map_index += 6;
                     remaining_body_height -= 8;
                 }
                 pattern_index++;
@@ -109,16 +120,12 @@ void castle_update (void)
                 strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index;
             }
 
-            SMS_loadTileMapArea (col_base + col, 6, strip_map, 1, 12);
-
-            /* Pattern entries for this strip */
-            uint8_t pattern_buffer [32 * 5] = { 0 };
             uint16_t buffer_index = peak_start << 2;
 
             /* Start with the peaks, note not all 8 pixels are used in the first pattern. */
-            memcpy (&pattern_buffer [buffer_index], &castles_patterns [(castles_panels [player] [0 + col] << 3) + 3], 20);
+            memcpy (&pattern_buffer [col] [buffer_index], &castles_patterns [(castles_panels [player] [0 + col] << 3) + 3], 20);
             buffer_index += 20;
-            memcpy (&pattern_buffer [buffer_index], &castles_patterns [(castles_panels [player] [6 + col] << 3)], 32);
+            memcpy (&pattern_buffer [col] [buffer_index], &castles_patterns [(castles_panels [player] [6 + col] << 3)], 32);
             buffer_index += 32;
 
             /* Account for the repeated section. The base contains up to five height,
@@ -134,24 +141,37 @@ void castle_update (void)
             {
                 if (body_height_draw > 8)
                 {
-                    memcpy (&pattern_buffer [buffer_index], &castles_patterns [(castles_panels [player] [12 + col] << 3)], 32);
+                    memcpy (&pattern_buffer [col] [buffer_index], &castles_patterns [(castles_panels [player] [12 + col] << 3)], 32);
                     buffer_index += 32;
                     body_height_draw -= 8;
                 }
                 else
                 {
-                    memcpy (&pattern_buffer [buffer_index], &castles_patterns [(castles_panels [player] [12 + col] << 3)], body_height_draw << 2);
+                    memcpy (&pattern_buffer [col] [buffer_index], &castles_patterns [(castles_panels [player] [12 + col] << 3)], body_height_draw << 2);
                     buffer_index += body_height_draw << 2; /* TODO: Needed to feed in the background? */
                     body_height_draw = 0;
                 }
             }
 
-            /* For now, always write the full five patterns of the strip. */
-            SMS_loadTiles (pattern_buffer, strip_vram_base, sizeof (pattern_buffer));
-
             /* Advance to the next strip */
             strip_vram_base += 5;
         }
+
+        /* To show a complete transition from one castle height to another within a single
+         * frame, we need to start at VBlank and finish all writing before the castle is
+         * on-screen. The castle tiles begin at line 48, so finishing by then is the goal.
+         *
+         * For PAL consoles, the following code completes by line 23, so the full transition
+         * is completed glitch-free each time.
+         *
+         * For NTSC consoles, the following code completes by line 74. So, the peaks of the
+         * castle may glitch slightly for transitions greater than ~90 height.
+         *
+         * Possibly this could be improved by skipping unchanged parts of the tile-map, or
+         * by using unsafe writes for data that we know will occur during VBlank. */
+        SMS_waitForVBlank ();
+        SMS_loadTileMapArea (col_base, 6, strip_map, 6, 12);
+        SMS_loadTiles (pattern_buffer, (player == 0) ? PATTERN_CASTLE_1_BUFFER : PATTERN_CASTLE_2_BUFFER, sizeof (pattern_buffer));
 
         /* Update the cache */
         cache [player] = value;
@@ -198,7 +218,6 @@ void fence_update (void)
         uint8_t tiles_high = 2 + ((body_height + 1) >> 3);
         uint8_t peak_start = (14 - (body_height & 7)) & 7;
         uint16_t strip_vram_base = (player == 0) ? PATTERN_FENCE_1_BUFFER : PATTERN_FENCE_2_BUFFER;
-        uint8_t tiles_x = (player == 0) ? 13 : 18;
 
         /* Name-table entries for this strip */
         uint16_t strip_map [12] = { 0 };
@@ -233,8 +252,6 @@ void fence_update (void)
             strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index;
         }
 
-        SMS_loadTileMapArea (tiles_x, 6, strip_map, 1, 12);
-
         /* Pattern entries for this strip */
         uint8_t pattern_buffer [32 * 4] = { 0 };
         uint16_t buffer_index = peak_start << 2;
@@ -268,7 +285,9 @@ void fence_update (void)
             }
         }
 
-        /* For now, always write the full five patterns of the strip. */
+        /* Write to VRAM */
+        SMS_waitForVBlank ();
+        SMS_loadTileMapArea ((player == 0) ? 13 : 18, 6, strip_map, 1, 12);
         SMS_loadTiles (pattern_buffer, strip_vram_base, sizeof (pattern_buffer));
 
         /* Update the cache */
