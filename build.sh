@@ -129,6 +129,12 @@ build_ants_for_master_system ()
     echo "  Compiling..."
     for file in main title game castle panel sound rng save
     do
+        # Don't recompile files that are already up to date
+        if [ -e "./build/code/${file}.rel" -a "./source/${file}.c" -ot "./build/code/${file}.rel" ]
+        then
+            continue
+        fi
+
         echo "   -> ${file}.c"
         ${sdcc} -c -mz80 --peep-file ${devkitSMS}/SMSlib/src/peep-rules.txt -I ${SMSlib}/src \
             -o "build/code/${file}.rel" "source/${file}.c" || exit 1
@@ -165,8 +171,14 @@ build_ants_for_master_system ()
     echo "  Done"
 }
 
-# Clean up any old build artefacts
-rm -rf build
+# Check if we're doing a clean build
+if [ "${1}" = "clean" ]
+then
+    rm -rf title_tile_data
+    rm -rf game_tile_data
+    rm -rf sound_data
+    rm -rf build
+fi
 
 build_pcmenc
 build_sneptile
