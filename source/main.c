@@ -343,7 +343,7 @@ void main (void)
 
     /* The cursors are stored in bank 2 */
     SMS_mapROMBank (2);
-    SMS_loadTiles (&cursor_patterns [32], PATTERN_HAND_CURSOR, 128);
+    SMS_loadTiles (&cursor_patterns [32], PATTERN_HAND_CURSOR, 256);
     SMS_mapROMBank (3);
 
     player_patterns_start = STATIC_PATTERNS_START;

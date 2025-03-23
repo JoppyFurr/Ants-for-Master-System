@@ -507,15 +507,26 @@ static bool card_valid (card_t card)
  */
 static void draw_cursor (uint8_t x)
 {
+    card_t card = hands [player] [x];
     x = (x << 5) + 8;
 
     SMS_initSprites ();
 
-    /* Cursor patterns are loaded at the base of vram */
-    SMS_addSprite (x,     172,     PATTERN_HAND_CURSOR    );
-    SMS_addSprite (x + 8, 172,     PATTERN_HAND_CURSOR + 1);
-    SMS_addSprite (x,     172 + 8, PATTERN_HAND_CURSOR + 2);
-    SMS_addSprite (x + 8, 172 + 8, PATTERN_HAND_CURSOR + 3);
+    if (card_valid (card))
+    {
+        /* Cursor patterns are loaded at the base of vram */
+        SMS_addSprite (x,     172,     PATTERN_HAND_CURSOR    );
+        SMS_addSprite (x + 8, 172,     PATTERN_HAND_CURSOR + 1);
+        SMS_addSprite (x,     172 + 8, PATTERN_HAND_CURSOR + 2);
+        SMS_addSprite (x + 8, 172 + 8, PATTERN_HAND_CURSOR + 3);
+    }
+    else
+    {
+        SMS_addSprite (x,     172,     PATTERN_HAND_CURSOR + 4);
+        SMS_addSprite (x + 8, 172,     PATTERN_HAND_CURSOR + 5);
+        SMS_addSprite (x,     172 + 8, PATTERN_HAND_CURSOR + 6);
+        SMS_addSprite (x + 8, 172 + 8, PATTERN_HAND_CURSOR + 7);
+    }
 
     SMS_copySpritestoSAT ();
 }

@@ -51,11 +51,12 @@ build_ants_for_master_system ()
         # Sprite palette [0] is black (background colour)
         # Sprite palette [1] is white (cursor)
         # Sprite palette [2] is green (win counter digits + green card border)
+        # Sprite palette [3] is red (disabled cursor)
         # Background palette [0] is black (background colour)
         ${sneptile} --sprites --output-dir title_tile_data \
-            --sprite-palette 0x00 0x3f 0x08 \
+            --sprite-palette 0x00 0x3f 0x08 0x02 \
             --background-palette 0x00 \
-            --panels 2x2,2 tiles/cursor.png \
+            --panels 2x2,3 tiles/cursor.png \
             --background tiles/title.png \
             --background --panels 2x1,4 tiles/widgets.png
     )
@@ -64,11 +65,12 @@ build_ants_for_master_system ()
         # Sprite palette [0] is black (background colour)
         # Sprite palette [1] is white (cursor)
         # Sprite palette [2] is green (win counter digits + green card border)
+        # Sprite palette [3] is red (disabled cursor)
         # Background palette [0] is black (background colour)
         # Background palette [1] is white (digit printing)
         # Background palette [2] is yellow (digit printing)
         ${sneptile} --sprites --output-dir game_tile_data \
-            --sprite-palette 0x00 0x3f 0x08 \
+            --sprite-palette 0x00 0x3f 0x08 0x02 \
             --background-palette 0x00 0x3f 0x1f \
             --panels 4x2,4 tiles/player.png \
             --background tiles/panel.png \

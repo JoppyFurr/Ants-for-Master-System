@@ -5,37 +5,37 @@
 
 /*
  * Title screen VRAM layout:
- *   [  0..  7] - Cursor
- *   [  8..405] - Title image
- *   [406..413] - Widgets
+ *   [  0.. 11] - Cursor
+ *   [ 12..409] - Title image
+ *   [410..417] - Widgets
  */
 #define PATTERN_CURSOR              0
-#define PATTERN_TITLE_IMAGE         8
-#define PATTERN_WIDGETS           406
+#define PATTERN_TITLE_IMAGE        12
+#define PATTERN_WIDGETS           410
 
 /*
  * Gameplay VRAM Layout:
  *
  *   [       0] - Blank pattern
  *   [  1..240] - ten-card dynamic buffer
- *   [241..244] - Hand cursor
- *   [245..276] - Panel digit area
- *   [277..306] - Castle dynamic buffer (left)
- *   [307..336] - Castle dynamic buffer (right)
- *   [337..340] - Fence dynamic buffer (left)
- *   [341..344] - Fence dynamic buffer (right)
- *   [345..348] - Win-counter digits
- *   [349..   ] - Static patterns (72 for now)
+ *   [241..248] - Hand cursor
+ *   [249..280] - Panel digit area
+ *   [281..310] - Castle dynamic buffer (left)
+ *   [311..340] - Castle dynamic buffer (right)
+ *   [341..344] - Fence dynamic buffer (left)
+ *   [345..348] - Fence dynamic buffer (right)
+ *   [349..352] - Win-counter digits
+ *   [353..   ] - Static patterns (72 for now)
  */
 
 #define PATTERN_BLANK               0
 #define PATTERN_CARD_BUFFER         1
 #define PATTERN_HAND_CURSOR       241
-#define PATTERN_PANEL_DIGITS      245
-#define PATTERN_CASTLE_1_BUFFER   277
-#define PATTERN_CASTLE_2_BUFFER   307
-#define PATTERN_FENCE_1_BUFFER    337
-#define PATTERN_FENCE_2_BUFFER    341
-#define PATTERN_WIN_DIGITS        345
-#define STATIC_PATTERNS_START     349
+#define PATTERN_PANEL_DIGITS      249
+#define PATTERN_CASTLE_1_BUFFER   281
+#define PATTERN_CASTLE_2_BUFFER   311
+#define PATTERN_FENCE_1_BUFFER    341
+#define PATTERN_FENCE_2_BUFFER    345
+#define PATTERN_WIN_DIGITS        349
+#define STATIC_PATTERNS_START     353
 
