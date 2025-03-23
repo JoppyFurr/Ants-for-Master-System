@@ -6,4 +6,4 @@
  */
 
 #include <stdint.h>
-#include "../sound_data/fanfare_1.h"
+#include "../sound_data/curse.h"

@@ -6,5 +6,5 @@
  */
 
 #include <stdint.h>
-#include "../sound_data/increase-stocks.h"
-#include "../sound_data/decrease-stocks.h"
+#include "../sound_data/ruin-castle.h"
+#include "../sound_data/ruin-fence.h"

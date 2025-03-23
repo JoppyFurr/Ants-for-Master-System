@@ -6,5 +6,5 @@
  */
 
 #include <stdint.h>
-#include "../sound_data/ruin-castle.h"
-#include "../sound_data/ruin-fence.h"
+#include "../sound_data/build-castle.h"
+#include "../sound_data/build-fence.h"

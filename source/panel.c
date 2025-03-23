@@ -50,7 +50,7 @@ void panel_update_wins (uint8_t player)
 
     const uint8_t y_offset = 1;
 
-    uint8_t colour_index = 2; /* Green */
+    uint8_t colour_index = 4; /* Green */
 
     /* Draw the digit font into the pattern */
     for (uint8_t line = 0; line < 5; line++)

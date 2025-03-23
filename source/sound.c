@@ -27,7 +27,7 @@ extern const uint8_t fanfare_sound_2 [];
  */
 void play_card_sound (void)
 {
-    SMS_mapROMBank (4);
+    SMS_mapROMBank (5);
     PlaySample ((void *) card_sound);
     SMS_mapROMBank (3); /* By default, keep the VDP patterns mapped */
 }
@@ -38,7 +38,7 @@ void play_card_sound (void)
  */
 void play_increase_power_sound (void)
 {
-    SMS_mapROMBank (4);
+    SMS_mapROMBank (5);
     PlaySample ((void *) increase_power_sound);
     SMS_mapROMBank (3); /* By default, keep the VDP patterns mapped */
 }
@@ -49,7 +49,7 @@ void play_increase_power_sound (void)
  */
 void play_build_castle_sound (void)
 {
-    SMS_mapROMBank (5);
+    SMS_mapROMBank (6);
     PlaySample ((void *) build_castle_sound);
     SMS_mapROMBank (3); /* By default, keep the VDP patterns mapped */
 }
@@ -60,7 +60,7 @@ void play_build_castle_sound (void)
  */
 void play_build_fence_sound (void)
 {
-    SMS_mapROMBank (5);
+    SMS_mapROMBank (6);
     PlaySample ((void *) build_fence_sound);
     SMS_mapROMBank (3); /* By default, keep the VDP patterns mapped */
 }
@@ -71,7 +71,7 @@ void play_build_fence_sound (void)
  */
 void play_ruin_castle_sound (void)
 {
-    SMS_mapROMBank (6);
+    SMS_mapROMBank (7);
     PlaySample ((void *) ruin_castle_sound);
     SMS_mapROMBank (3); /* By default, keep the VDP patterns mapped */
 }
@@ -82,7 +82,7 @@ void play_ruin_castle_sound (void)
  */
 void play_ruin_fence_sound (void)
 {
-    SMS_mapROMBank (6);
+    SMS_mapROMBank (7);
     PlaySample ((void *) ruin_fence_sound);
     SMS_mapROMBank (3); /* By default, keep the VDP patterns mapped */
 }
@@ -93,7 +93,7 @@ void play_ruin_fence_sound (void)
  */
 void play_increase_stocks_sound (void)
 {
-    SMS_mapROMBank (7);
+    SMS_mapROMBank (8);
     PlaySample ((void *) increase_stocks_sound);
     SMS_mapROMBank (3); /* By default, keep the VDP patterns mapped */
 }
@@ -104,7 +104,7 @@ void play_increase_stocks_sound (void)
  */
 void play_decrease_stocks_sound (void)
 {
-    SMS_mapROMBank (7);
+    SMS_mapROMBank (8);
     PlaySample ((void *) decrease_stocks_sound);
     SMS_mapROMBank (3); /* By default, keep the VDP patterns mapped */
 }
@@ -115,7 +115,7 @@ void play_decrease_stocks_sound (void)
  */
 void play_curse_sound (void)
 {
-    SMS_mapROMBank (8);
+    SMS_mapROMBank (9);
     PlaySample ((void *) curse_sound);
     SMS_mapROMBank (3); /* By default, keep the VDP patterns mapped */
 }
@@ -126,9 +126,9 @@ void play_curse_sound (void)
  */
 void play_fanfare_sound (void)
 {
-    SMS_mapROMBank (9);
-    PlaySample ((void *) fanfare_sound_1);
     SMS_mapROMBank (10);
+    PlaySample ((void *) fanfare_sound_1);
+    SMS_mapROMBank (11);
     PlaySample ((void *) fanfare_sound_2);
     SMS_mapROMBank (3); /* By default, keep the VDP patterns mapped */
 }

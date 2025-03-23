@@ -13,8 +13,10 @@
 #define TARGET_SMS
 #include "bank_2.h"
 #include "bank_3.h"
+#include "bank_4.h"
 #include "../game_tile_data/palette.h"
 #include "../game_tile_data/pattern_index.h"
+#include "../card_tile_data/pattern_index.h"
 
 #include "vram.h"
 #include "cards.h"
@@ -114,6 +116,7 @@ static inline uint8_t load_card (card_t card, uint8_t slot)
     if (card_buffer_contains [slot] != card)
     {
         card_buffer_contains [slot] = card;
+        SMS_mapROMBank (4); /* Card artwork is located in bank 4. */
 
         if (card & DISCARD_BIT)
         {
@@ -159,6 +162,7 @@ static inline uint8_t load_card (card_t card, uint8_t slot)
                 SMS_loadTiles (&cards_patterns [pattern], card_buffer [slot][i] & 0x01ff, 32);
             }
         }
+        SMS_mapROMBank (3); /* By default, keep the gameplay VDP patterns mapped */
     }
 
     return slot;
