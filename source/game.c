@@ -12,6 +12,11 @@
 
 #include "SMSlib.h"
 
+#define TARGET_SMS
+#include "bank_2.h"
+#include "bank_3.h"
+#include "../game_tile_data/palette.h"
+
 #include "vram.h"
 #define INCLUDE_CARD_DATA
 #include "cards.h"
@@ -23,12 +28,18 @@
 #define MIN(X,Y) (((X) < (Y)) ? X : Y)
 
 /* External functions */
+extern void card_buffer_prepare (void);
 extern void card_slide_from (uint16_t start_x, uint16_t start_y, card_t card, uint8_t slot);
 extern void card_slide_to (uint16_t end_x, uint16_t end_y);
 extern void card_slide_to_fast (uint16_t end_x, uint16_t end_y);
 extern void card_slide_done (void);
 extern void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_t slot);
 extern void delay_frames (uint8_t frames);
+
+/* Shared data */
+uint16_t player_patterns_start = 0;
+uint16_t panel_patterns_start = 0;
+extern bool reset;
 
 /* Game Settings */
 bool infinite_game = false;
@@ -42,6 +53,11 @@ card_t hands [2] [8];
 uint16_t resources [2] [FIELD_MAX];
 uint8_t empty_slot = 0;
 bool castle_damaged = false;
+
+/* A blank pattern */
+static const uint32_t blank_pattern [8] = {
+    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+};
 
 /* Starting resources */
 const uint16_t starting_resources [8] = {
@@ -429,12 +445,12 @@ static void discard_card (uint8_t slot)
 /*
  * Slide a card off-screen, used at the end of a game.
  */
-static void clear_card (uint8_t slot, bool hidden)
+static void clear_card (uint8_t slot)
 {
     card_t card = hands [player] [slot];
     hands [player] [slot] = CARD_NONE;
 
-    if (hidden)
+    if (!player_visible [player])
     {
         card = CARD_BACK;
     }
@@ -603,6 +619,11 @@ static void human_move (void)
         }
 
         SMS_waitForVBlank ();
+
+        if (reset)
+        {
+            return;
+        }
     }
 }
 
@@ -663,18 +684,70 @@ static void ai_move (void)
 
 
 /*
+ * Fill the name table with tile-zero.
+ */
+static inline void clear_background (void)
+{
+    uint16_t blank_line [32] = { 0 };
+
+    for (uint8_t row = 0; row < 24; row++)
+    {
+        SMS_loadTileMapArea (0, row, &blank_line, 32, 1);
+    }
+}
+
+
+/*
  * Play one game of Ants.
  */
 void game_start (void)
 {
+    /* Once-off setup before starting the game loop.
+     * Only needed when entering the game after leaving the title menu. */
+    SMS_displayOff ();
+    SMS_loadBGPalette (background_palette);
+    SMS_loadSpritePalette (sprite_palette);
+
+    /* Setup for gameplay */
+    SMS_loadTiles (blank_pattern, PATTERN_BLANK, sizeof (blank_pattern));
+    clear_background ();
+
+    /* The cursors are in bank 2 */
+    SMS_mapROMBank (2);
+    SMS_loadTiles (&cursor_patterns [32], PATTERN_HAND_CURSOR, 256);
+
+    /* Player indicators and panels are in bank 3 */
+    SMS_mapROMBank (3);
+    player_patterns_start = STATIC_PATTERNS_START;
+    SMS_loadTiles (player_patterns, player_patterns_start, sizeof (player_patterns));
+    panel_patterns_start = player_patterns_start + (sizeof (player_patterns) >> 5);
+    SMS_loadTiles (panel_patterns, panel_patterns_start, sizeof (panel_patterns));
+
+    card_buffer_prepare ();
+
+    SMS_initSprites ();
+    SMS_copySpritestoSAT ();
+
     /* Draw the draw deck and side panels */
     render_card_as_background (12, 0, CARD_BACK, 9);
     render_card_as_background (16, 0, CARD_NONE, 8);
     panel_init_wins ();
     panel_init ();
 
+    /* Reset castle and fence value cache */
+    castle_init ();
+    fence_init ();
+
+    /* Draw initial values */
+    memcpy (resources [0], starting_resources, sizeof (resources [0]));
+    memcpy (resources [1], starting_resources, sizeof (resources [1]));
+    panel_update ();
+    castle_update ();
+    fence_update ();
+    SMS_displayOn ();
+
     /* Outer loop - Ensures that when one game is completed, another begins */
-    while (true)
+    while (!reset)
     {
         /* Set up for a new game */
         /* Clear hands and reset to starting resources */
@@ -763,6 +836,12 @@ void game_start (void)
                 }
             }
 
+            /* Check for reset */
+            if (reset)
+            {
+                break;
+            }
+
             draw_card (empty_slot, false);
             delay_frames (30);
         }
@@ -772,7 +851,7 @@ void game_start (void)
         {
             if (hands [player] [card] != CARD_NONE)
             {
-                clear_card (card, (player == 1));
+                clear_card (card);
             }
         }
     }

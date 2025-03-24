@@ -148,13 +148,21 @@ static void toggle_infinite (void)
  */
 void title_screen (void)
 {
+    SMS_displayOff ();
+    SMS_loadBGPalette (background_palette);
+    SMS_loadSpritePalette (sprite_palette);
+
+    /* Default settings */
+    infinite_game = false;
+    selected_player = CURSOR_POS_BLACKS;
+    player_human [0] = true;
+    player_human [1] = false;
+    player_visible [0] = true;
+    player_visible [1] = false;
+
     uint16_t vdp_title_indices [768];
     cursor_position_t cursor_pos = CURSOR_POS_START;
 
-
-    SMS_loadBGPalette (background_palette);
-    SMS_loadSpritePalette (sprite_palette);
-    SMS_setBackdropColor (0);
     SMS_mapROMBank (2); /* Title patterns are stored in bank 2 */
 
     SMS_loadTiles (cursor_patterns, PATTERN_CURSOR, sizeof (cursor_patterns));
@@ -170,8 +178,6 @@ void title_screen (void)
     SMS_useFirstHalfTilesforSprites (true);
     draw_cursor (235, 175);
 
-    SMS_displayOn ();
-
     /* Prepare widget tile maps */
     vdp_unselected_radio [0]    = widgets_panels [0] [0] + PATTERN_WIDGETS;
     vdp_unselected_radio [1]    = widgets_panels [0] [1] + PATTERN_WIDGETS;
@@ -182,7 +188,9 @@ void title_screen (void)
     vdp_selected_checkbox [0]   = widgets_panels [3] [0] + PATTERN_WIDGETS;
     vdp_selected_checkbox [1]   = widgets_panels [3] [1] + PATTERN_WIDGETS;
 
-    /* For now, just wait for the player to press a button */
+    SMS_displayOn ();
+
+    /* Main loop for title screen - Respond to user input. */
     while (true)
     {
         uint16_t key_pressed = SMS_getKeysPressed ();

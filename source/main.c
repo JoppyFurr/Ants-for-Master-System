@@ -11,10 +11,7 @@
 #include "../libraries/sms-fxsample/fxsample.h"
 
 #define TARGET_SMS
-#include "bank_2.h"
-#include "bank_3.h"
 #include "bank_4.h"
-#include "../game_tile_data/palette.h"
 #include "../game_tile_data/pattern_index.h"
 #include "../card_tile_data/pattern_index.h"
 
@@ -26,16 +23,11 @@
 #include "sound.h"
 #include "title.h"
 
-uint16_t player_patterns_start = 0;
-uint16_t panel_patterns_start = 0;
+/* Shared state */
+bool reset = false;
 
 /* External variables */
 extern uint16_t resources [2] [FIELD_MAX];
-
-/* A blank pattern */
-static const uint32_t blank_pattern [8] = {
-    0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
 
 /* Empty card area */
 static const uint16_t empty_slot [24] = {
@@ -52,7 +44,7 @@ static const uint16_t empty_slot [24] = {
  *   8: Most recent discard
  *   9: Card-back */
 static uint16_t card_buffer [10] [24];
-static uint8_t card_buffer_contains [10] = {
+uint8_t card_buffer_contains [10] = {
     CARD_NONE, CARD_NONE, CARD_NONE, CARD_NONE,
     CARD_NONE, CARD_NONE, CARD_NONE, CARD_NONE,
     CARD_NONE, CARD_NONE
@@ -66,9 +58,9 @@ static uint8_t card_buffer_sprite = 0;
  * For now, the ten buffered cards are stored without de-duplication,
  * using a fixed 24-pattern block per card.
  */
-static void card_buffer_prepare (void)
+void card_buffer_prepare (void)
 {
-    /* Dynamic buffer */
+    /* Dynamic buffer in VRAM for patterns */
     uint16_t index = 0;
     for (uint8_t slot = 0; slot < 10; slot++)
     {
@@ -76,6 +68,9 @@ static void card_buffer_prepare (void)
         {
             card_buffer [slot] [pattern] = 0x0800 | PATTERN_CARD_BUFFER + index++;
         }
+
+        /* Reset the software reference */
+        card_buffer_contains [slot] = CARD_NONE;
     }
 }
 
@@ -84,20 +79,6 @@ static void card_buffer_prepare (void)
 uint16_t slide_start_x = 0;
 uint16_t slide_start_y = 0;
 card_t slide_card = 0;
-
-
-/*
- * Fill the name table with tile-zero.
- */
-static inline void clear_background (void)
-{
-    uint16_t blank_line [32] = { 0 };
-
-    for (uint8_t row = 0; row < 24; row++)
-    {
-        SMS_loadTileMapArea (0, row, &blank_line, 32, 1);
-    }
-}
 
 
 /*
@@ -319,6 +300,19 @@ void delay_frames (uint8_t frames)
 
 
 /*
+ * Frame interrupt.
+ * currently used to check if the reset button has been pressed.
+ */
+static void frame_interrupt (void)
+{
+    if (SMS_getKeysPressed () & RESET_KEY)
+    {
+        reset = true;
+    }
+}
+
+
+/*
  * Entry point.
  */
 void main (void)
@@ -326,47 +320,23 @@ void main (void)
     const uint8_t psg_init [] = {
         0x9f, 0xbf, 0xdf, 0xff, 0x81, 0x00, 0xa1, 0x00, 0xc1, 0x00, 0xe0
     };
-    initPSG ((void *) psg_init);
 
-    sram_load ();
-    rng_seed ();
-
-    /* Run title screen */
-    title_screen ();
-    SMS_displayOff ();
-
-    /* Setup for gameplay */
-    SMS_loadBGPalette (background_palette);
-    SMS_loadSpritePalette (sprite_palette);
+    /* Once-off setup */
     SMS_setBackdropColor (0);
-    SMS_mapROMBank (3); /* By default, keep the gameplay VDP patterns mapped */
-
-    /* Copy the static patterns into VRAM, but not the cards. There are too many
-     * cards to fit in VRAM at once, so they will be loaded as needed. */
-    SMS_loadTiles (blank_pattern, PATTERN_BLANK, sizeof (blank_pattern));
-
-    /* The cursors are stored in bank 2 */
-    SMS_mapROMBank (2);
-    SMS_loadTiles (&cursor_patterns [32], PATTERN_HAND_CURSOR, 256);
-    SMS_mapROMBank (3);
-
-    player_patterns_start = STATIC_PATTERNS_START;
-    SMS_loadTiles (player_patterns, player_patterns_start, sizeof (player_patterns));
-
-    panel_patterns_start = player_patterns_start + (sizeof (player_patterns) >> 5);
-    SMS_loadTiles (panel_patterns, panel_patterns_start, sizeof (panel_patterns));
-
-    card_buffer_prepare ();
-    clear_background ();
-
+    initPSG ((void *) psg_init);
+    sram_load ();
     SMS_useFirstHalfTilesforSprites (true);
-    SMS_initSprites ();
-    SMS_copySpritestoSAT ();
+    SMS_setFrameInterruptHandler (frame_interrupt);
 
-    SMS_displayOn ();
-
+    /* Outermost loop, cycles between the title screen and gameplay.
+     * The RNG is seeded so that time spent at the title screen has
+     * a chance to affect the R register.
+     * The only exit from gameplay is the SMS-1 reset button. */
     while (true)
     {
+        title_screen ();
+        rng_seed ();
+        reset = false;
         game_start ();
     }
 }

@@ -23,6 +23,20 @@ extern const uint32_t fence_patterns [];
 /* Game state */
 extern uint16_t resources [2] [FIELD_MAX];
 
+/* Cache current on-screen values */
+static uint16_t castle_cache [2];
+static uint16_t fence_cache [2];
+
+/*
+ * Initialise castle data.
+ */
+void castle_init (void)
+{
+    castle_cache [0] = 0;
+    castle_cache [1] = 0;
+}
+
+
 /*
  * Draw the castles.
  *
@@ -46,8 +60,6 @@ extern uint16_t resources [2] [FIELD_MAX];
  */
 void castle_update (void)
 {
-    static uint16_t cache [2] = { 0 };
-
     for (uint8_t player = 0; player < 2; player++)
     {
         uint16_t value = resources [player] [CASTLE];
@@ -59,7 +71,7 @@ void castle_update (void)
         }
 
         /* Only update if there has been a change */
-        if (value == cache [player])
+        if (value == castle_cache [player])
         {
             continue;
         }
@@ -174,8 +186,18 @@ void castle_update (void)
         SMS_loadTiles (pattern_buffer, (player == 0) ? PATTERN_CASTLE_1_BUFFER : PATTERN_CASTLE_2_BUFFER, sizeof (pattern_buffer));
 
         /* Update the cache */
-        cache [player] = value;
+        castle_cache [player] = value;
     }
+}
+
+
+/*
+ * Initialise fence data.
+ */
+void fence_init (void)
+{
+    fence_cache [0] = 0;
+    fence_cache [1] = 0;
 }
 
 
@@ -193,8 +215,6 @@ void castle_update (void)
  */
 void fence_update (void)
 {
-    static uint16_t cache [2] = { 0 };
-
     for (uint8_t player = 0; player < 2; player++)
     {
         uint16_t value = resources [player] [FENCE];
@@ -206,7 +226,7 @@ void fence_update (void)
         }
 
         /* Only update if there has been a change */
-        if (value == cache [player])
+        if (value == fence_cache [player])
         {
             continue;
         }
@@ -291,6 +311,6 @@ void fence_update (void)
         SMS_loadTiles (pattern_buffer, strip_vram_base, sizeof (pattern_buffer));
 
         /* Update the cache */
-        cache [player] = value;
+        fence_cache [player] = value;
     }
 }

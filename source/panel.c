@@ -26,6 +26,8 @@ extern uint16_t panel_patterns_start;
 extern uint16_t wins [2];
 extern uint16_t resources [2] [FIELD_MAX];
 
+/* Panel value cache */
+static uint16_t panel_cache [2] [FIELD_MAX];
 
 /*
  * Update the win counters at the top of the screen.
@@ -178,6 +180,13 @@ void panel_init (void)
         uint16_t area [2] = { PATTERN_PANEL_DIGITS + (i << 1), PATTERN_PANEL_DIGITS + (i << 1) + 1 };
         SMS_loadTileMapArea (x, y, area, 2, 1);
     }
+
+    /* Reset the cache */
+    for (uint8_t resource = 0; resource < FIELD_MAX; resource++)
+    {
+        panel_cache [0] [resource] = 0;
+        panel_cache [1] [resource] = 0;
+    }
 }
 
 
@@ -186,13 +195,11 @@ void panel_init (void)
  */
 void panel_update (void)
 {
-    static uint16_t cache [2] [FIELD_MAX] = { { 0 } };
     const uint8_t field_backgrounds [8] = { 6, 10, 18, 22, 30, 34, 46, 50 };
 
     /* A pair of buffers to hold the patterns we will draw into */
     uint8_t buffer_l [32];
     uint8_t buffer_r [32];
-
 
     for (uint8_t player = 0; player < 2; player++)
     for (uint8_t field = 0; field < FIELD_MAX; field++)
@@ -200,7 +207,7 @@ void panel_update (void)
         const uint16_t value = resources [player] [field];
 
         /* Skip fields that have not changed */
-        if (value == cache [player] [field])
+        if (value == panel_cache [player] [field])
         {
             continue;
         }
@@ -269,6 +276,6 @@ void panel_update (void)
         SMS_loadTiles (buffer_r, PATTERN_PANEL_DIGITS + (player << 4) + (field << 1) + 1, sizeof (buffer_r));
     }
 
-    memcpy (cache [0], resources [0], sizeof (cache [0]));
-    memcpy (cache [1], resources [1], sizeof (cache [1]));
+    memcpy (panel_cache [0], resources [0], sizeof (panel_cache [0]));
+    memcpy (panel_cache [1], resources [1], sizeof (panel_cache [1]));
 }
