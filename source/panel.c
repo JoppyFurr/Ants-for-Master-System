@@ -101,14 +101,12 @@ void panel_update_wins (uint8_t player)
 void panel_init_wins (void)
 {
     const uint16_t blacks_win_digits [2] = {
-        0x0800 | PATTERN_WIN_DIGITS + 0,
-        0x0800 | PATTERN_WIN_DIGITS + 1,
+        PATTERN_WIN_DIGITS + 0, PATTERN_WIN_DIGITS + 1,
     };
     SMS_loadTileMapArea (1, 0, blacks_win_digits, 2, 1);
 
     const uint16_t reds_win_digits [2] = {
-        0x0800 | PATTERN_WIN_DIGITS + 2,
-        0x0800 | PATTERN_WIN_DIGITS + 3
+        PATTERN_WIN_DIGITS + 2, PATTERN_WIN_DIGITS + 3
     };
     SMS_loadTileMapArea (29, 0, reds_win_digits, 2, 1);
 
@@ -129,16 +127,16 @@ void panel_update_player (uint8_t player)
     {
         for (uint8_t i = 0; i < 8; i++)
         {
-            left [i] = player_panels [2] [i] + PATTERN_PLAYERS | 0x0800;
-            right [i] = player_panels [1] [i] + PATTERN_PLAYERS | 0x0800;
+            left [i] = player_panels [2] [i] + PATTERN_PLAYERS;
+            right [i] = player_panels [1] [i] + PATTERN_PLAYERS;
         }
     }
     else
     {
         for (uint8_t i = 0; i < 8; i++)
         {
-            left [i] = player_panels [0] [i] + PATTERN_PLAYERS | 0x0800;
-            right [i] = player_panels [3] [i] + PATTERN_PLAYERS | 0x0800;
+            left [i] = player_panels [0] [i] + PATTERN_PLAYERS;
+            right [i] = player_panels [3] [i] + PATTERN_PLAYERS;
         }
     }
 

@@ -13,3 +13,4 @@ This is my remake of the game for the Sega Master System
 * [pcmenc](https://github.com/maxim-zhao/pcmenc) <br /> Encodes .wav PCM audio for playback on 8-bit sound chips
 * [sms-fxsample](https://github.com/kusfo/sms-fxsample) <br /> C wrapper for PCM playback
 * [Sneptile](https://github.com/JoppyFurr/Sneptile) <br /> Convert .png images into VDP patterns
+* The clouds in the background have been borrowed from Bridge Zone of SEGA's Sonic The Hedgehog (SMS version)

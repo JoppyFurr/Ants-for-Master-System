@@ -101,13 +101,13 @@ void castle_update (void)
             uint8_t strip_map_index = col + 6 * (12 - tiles_high);
 
             /* Place the peak (2 or 3 tiles) */
-            strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index++;
+            strip_map [strip_map_index] = strip_vram_base + pattern_index++;
             strip_map_index += 6;
-            strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index++;
+            strip_map [strip_map_index] = strip_vram_base + pattern_index++;
             strip_map_index += 6;
             if (peak_start > 3)
             {
-                strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index++;
+                strip_map [strip_map_index] = strip_vram_base + pattern_index++;
                 strip_map_index += 6;
             }
 
@@ -119,7 +119,7 @@ void castle_update (void)
             {
                 while (remaining_body_height > 8)
                 {
-                    strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index;
+                    strip_map [strip_map_index] = strip_vram_base + pattern_index;
                     strip_map_index += 6;
                     remaining_body_height -= 8;
                 }
@@ -129,7 +129,7 @@ void castle_update (void)
             /* Place the base */
             if (remaining_body_height)
             {
-                strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index;
+                strip_map [strip_map_index] = strip_vram_base + pattern_index;
             }
 
             uint16_t buffer_index = peak_start << 2;
@@ -246,10 +246,10 @@ void fence_update (void)
         uint8_t strip_map_index = (12 - tiles_high);
 
         /* Place the peak (1 or 2 tiles) */
-        strip_map [strip_map_index++] = 0x0800 | strip_vram_base + pattern_index++;
+        strip_map [strip_map_index++] = strip_vram_base + pattern_index++;
         if (peak_start > 1)
         {
-            strip_map [strip_map_index++] = 0x0800 | strip_vram_base + pattern_index++;
+            strip_map [strip_map_index++] = strip_vram_base + pattern_index++;
         }
 
         uint8_t body_height_from_peak = (body_height < 5) ? body_height : ((body_height - 5) & 0x07);
@@ -260,7 +260,7 @@ void fence_update (void)
         {
             while (remaining_body_height > 8)
             {
-                strip_map [strip_map_index++] = 0x0800 | strip_vram_base + pattern_index;
+                strip_map [strip_map_index++] = strip_vram_base + pattern_index;
                 remaining_body_height -= 8;
             }
             pattern_index++;
@@ -269,7 +269,7 @@ void fence_update (void)
         /* Place the base */
         if (remaining_body_height)
         {
-            strip_map [strip_map_index] = 0x0800 | strip_vram_base + pattern_index;
+            strip_map [strip_map_index] = strip_vram_base + pattern_index;
         }
 
         /* Pattern entries for this strip */

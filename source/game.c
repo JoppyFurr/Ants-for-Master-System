@@ -27,6 +27,9 @@
 
 #define MIN(X,Y) (((X) < (Y)) ? X : Y)
 
+/* Pattern and index data */
+extern const uint16_t background_indices [];
+
 /* External functions */
 extern void card_buffer_prepare (void);
 extern void card_slide_from (uint16_t start_x, uint16_t start_y, card_t card, uint8_t slot);
@@ -723,8 +726,14 @@ void game_start (void)
 
     card_buffer_prepare ();
 
-    SMS_initSprites ();
-    SMS_copySpritestoSAT ();
+    /* Draw the background */
+    SMS_loadTiles (background_patterns, PATTERN_BACKGROUND, sizeof (background_patterns));
+    uint16_t vdp_background_indices [432]; /* 192 × 144 area */
+    for (uint16_t i = 0; i < 432; i++)
+    {
+        vdp_background_indices [i] = background_indices [i] + PATTERN_BACKGROUND;
+    }
+    SMS_loadTileMapArea (4, 0, vdp_background_indices, 24, 18);
 
     /* Draw the draw deck and side panels */
     render_card_as_background (12, 0, CARD_BACK, 9);
@@ -735,6 +744,10 @@ void game_start (void)
     /* Reset castle and fence value cache */
     castle_init ();
     fence_init ();
+
+    /* Clear any sprites */
+    SMS_initSprites ();
+    SMS_copySpritestoSAT ();
 
     /* Draw initial values */
     memcpy (resources [0], starting_resources, sizeof (resources [0]));

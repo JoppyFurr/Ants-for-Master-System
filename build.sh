@@ -82,10 +82,11 @@ build_ants_for_master_system ()
         ${sneptile} --sprites --output-dir game_tile_data \
             --sprite-palette ${GAME_SPRITE_PALETTE} \
             --background-palette 0x00 0x3f 0x1f \
-            --panels 4x2,4 tiles/player.png \
+            --background --panels 4x2,4 tiles/player.png \
             --background tiles/panel.png \
-            --panels 6x3,2 tiles/castles.png \
-            --panels 1x2,2 tiles/fence.png
+            --background --panels 6x3,2 tiles/castles.png \
+            --background --panels 1x2,2 tiles/fence.png \
+            --background tiles/background.png
     )
     mkdir -p card_tile_data
     (

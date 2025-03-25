@@ -22,11 +22,13 @@
  *   [249..280] - Panel digit area
  *   [281..310] - Castle dynamic buffer (left)
  *   [311..340] - Castle dynamic buffer (right)
+ *   [341..344] - Win-counter digits
+ *   [345..376] - Player indicators
+ *   [377..416] - Panels indicators <-- Contains recoverable patterns where digits will go.
+ *   [417..441] - Background
+ *
  *   [341..344] - Fence dynamic buffer (left)
  *   [345..348] - Fence dynamic buffer (right)
- *   [349..352] - Win-counter digits
- *   [353..384] - Player indicators
- *   [385..424] - Panels indicators <-- Contains recoverable patterns where digits will go.
  */
 
 #define PATTERN_BLANK               0
@@ -35,9 +37,13 @@
 #define PATTERN_PANEL_DIGITS      249
 #define PATTERN_CASTLE_1_BUFFER   281
 #define PATTERN_CASTLE_2_BUFFER   311
-#define PATTERN_FENCE_1_BUFFER    341
-#define PATTERN_FENCE_2_BUFFER    345
-#define PATTERN_WIN_DIGITS        349
-#define PATTERN_PLAYERS           353
-#define PATTERN_PANELS            385
+#define PATTERN_WIN_DIGITS        341
+#define PATTERN_PLAYERS           345
+#define PATTERN_PANELS            377
+#define PATTERN_BACKGROUND        417
+
+/* Because they're the correct size - The dynamic fence
+ * patterns squeeze into the unused portion of the name-table. */
+#define PATTERN_FENCE_1_BUFFER    496
+#define PATTERN_FENCE_2_BUFFER    500
 
