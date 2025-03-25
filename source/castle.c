@@ -20,6 +20,8 @@ extern const uint32_t castles_patterns [];
 extern const uint16_t fence_panels [2] [2];
 extern const uint32_t fence_patterns [];
 
+extern uint16_t vdp_background_indices [432]; /* 192 × 144 area */
+
 /* Game state */
 extern uint16_t resources [2] [FIELD_MAX];
 
@@ -85,9 +87,15 @@ void castle_update (void)
         uint16_t strip_vram_base = (player == 0) ? PATTERN_CASTLE_1_BUFFER : PATTERN_CASTLE_2_BUFFER;
         uint8_t col_base = (player == 0) ? 6 : 20;
 
-        /* Name-table entries for the vertical strips */
+        /* Pre-populate castle area name-table entries with
+         * the background image. */
         uint16_t strip_map [72];
-        memset (strip_map, 0, sizeof (strip_map)); /* Initialise to empty tile */
+        uint16_t background_index = (player == 0) ? (144 + 2) : (144 + 16);
+        for (uint8_t i = 0; i < 72; i += 6)
+        {
+            memcpy (&strip_map [i], &vdp_background_indices [background_index], 32);
+            background_index += 24;
+        }
 
         /* Pattern entries for this strip */
         uint8_t pattern_buffer [6] [32 * 5];
@@ -239,8 +247,16 @@ void fence_update (void)
         uint8_t peak_start = (14 - (body_height & 7)) & 7;
         uint16_t strip_vram_base = (player == 0) ? PATTERN_FENCE_1_BUFFER : PATTERN_FENCE_2_BUFFER;
 
-        /* Name-table entries for this strip */
-        uint16_t strip_map [12] = { 0 };
+        /* Name-table entries for this strip.
+         * Pre-populate with a strip of the background image. */
+        uint16_t strip_map [12];
+        uint16_t background_index = (player == 0) ? (144 + 9) : (144 + 14);
+        for (uint8_t i = 0; i < 12; i++)
+        {
+            strip_map [i] = vdp_background_indices [background_index];
+            background_index += 24;
+        }
+
         uint16_t pattern_index = 0;
 
         uint8_t strip_map_index = (12 - tiles_high);

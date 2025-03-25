@@ -29,6 +29,7 @@
 
 /* Pattern and index data */
 extern const uint16_t background_indices [];
+uint16_t vdp_background_indices [432]; /* 192 × 144 area */
 
 /* External functions */
 extern void card_buffer_prepare (void);
@@ -728,7 +729,6 @@ void game_start (void)
 
     /* Draw the background */
     SMS_loadTiles (background_patterns, PATTERN_BACKGROUND, sizeof (background_patterns));
-    uint16_t vdp_background_indices [432]; /* 192 × 144 area */
     for (uint16_t i = 0; i < 432; i++)
     {
         vdp_background_indices [i] = background_indices [i] + PATTERN_BACKGROUND;
