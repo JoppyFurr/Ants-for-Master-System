@@ -718,10 +718,8 @@ void game_start (void)
 
     /* Player indicators and panels are in bank 3 */
     SMS_mapROMBank (3);
-    player_patterns_start = STATIC_PATTERNS_START;
-    SMS_loadTiles (player_patterns, player_patterns_start, sizeof (player_patterns));
-    panel_patterns_start = player_patterns_start + (sizeof (player_patterns) >> 5);
-    SMS_loadTiles (panel_patterns, panel_patterns_start, sizeof (panel_patterns));
+    SMS_loadTiles (player_patterns, PATTERN_PLAYERS, sizeof (player_patterns));
+    SMS_loadTiles (panel_patterns, PATTERN_PANELS, sizeof (panel_patterns));
 
     card_buffer_prepare ();
 

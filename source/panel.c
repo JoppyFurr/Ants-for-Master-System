@@ -16,11 +16,8 @@
 /* Pattern and index data */
 extern const uint16_t player_panels [] [8];
 extern const uint32_t player_patterns [];
-extern uint16_t player_patterns_start;
-
 extern const uint16_t panel_indices [];
 extern const uint32_t panel_patterns [];
-extern uint16_t panel_patterns_start;
 
 /* Game state */
 extern uint16_t wins [2];
@@ -132,16 +129,16 @@ void panel_update_player (uint8_t player)
     {
         for (uint8_t i = 0; i < 8; i++)
         {
-            left [i] = player_panels [2] [i] + player_patterns_start | 0x0800;
-            right [i] = player_panels [1] [i] + player_patterns_start | 0x0800;
+            left [i] = player_panels [2] [i] + PATTERN_PLAYERS | 0x0800;
+            right [i] = player_panels [1] [i] + PATTERN_PLAYERS | 0x0800;
         }
     }
     else
     {
         for (uint8_t i = 0; i < 8; i++)
         {
-            left [i] = player_panels [0] [i] + player_patterns_start | 0x0800;
-            right [i] = player_panels [3] [i] + player_patterns_start | 0x0800;
+            left [i] = player_panels [0] [i] + PATTERN_PLAYERS | 0x0800;
+            right [i] = player_panels [3] [i] + PATTERN_PLAYERS | 0x0800;
         }
     }
 
@@ -163,7 +160,7 @@ void panel_init (void)
 
     for (uint8_t i = 0; i < 56; i++)
     {
-        vdp_panel_indices [i] = panel_indices [i] + panel_patterns_start;
+        vdp_panel_indices [i] = panel_indices [i] + PATTERN_PANELS;
     }
 
     /* Copy tilemap from image */

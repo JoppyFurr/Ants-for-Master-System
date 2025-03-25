@@ -25,7 +25,8 @@
  *   [341..344] - Fence dynamic buffer (left)
  *   [345..348] - Fence dynamic buffer (right)
  *   [349..352] - Win-counter digits
- *   [353..   ] - Static patterns (72 for now)
+ *   [353..384] - Player indicators
+ *   [385..424] - Panels indicators <-- Contains recoverable patterns where digits will go.
  */
 
 #define PATTERN_BLANK               0
@@ -37,5 +38,6 @@
 #define PATTERN_FENCE_1_BUFFER    341
 #define PATTERN_FENCE_2_BUFFER    345
 #define PATTERN_WIN_DIGITS        349
-#define STATIC_PATTERNS_START     353
+#define PATTERN_PLAYERS           353
+#define PATTERN_PANELS            385
 
