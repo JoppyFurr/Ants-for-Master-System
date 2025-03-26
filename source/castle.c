@@ -324,6 +324,27 @@ void fence_update (void)
         memcpy (&pattern_buffer [buffer_index], &fence_patterns [(fence_panels [player] [0] << 3) + 1], 28);
         buffer_index += 28;
 
+        /* TODO: For now, just assume the peaks take two full patterns.
+         *       This means we do some calculations that will be thrown away */
+        uint8_t bg_start_col = (player == 0) ? 9 : 14;
+        for (uint8_t row = 0; row < 2; row++)
+        {
+            const uint8_t *background_ptr = (const uint8_t *)
+                &background_patterns [background_indices [bg_start_col + (18 - tiles_high + row) * 24] << 3];
+            uint8_t *dest_ptr = &pattern_buffer [row << 5];
+
+            for (uint8_t line_byte = 0; line_byte < 32; line_byte += 4)
+            {
+                uint8_t mask = ~(dest_ptr [line_byte + 0] | dest_ptr [line_byte + 1] |
+                                 dest_ptr [line_byte + 2] | dest_ptr [line_byte + 3]);
+
+                dest_ptr [line_byte + 0] |= background_ptr [line_byte + 0] & mask;
+                dest_ptr [line_byte + 1] |= background_ptr [line_byte + 1] & mask;
+                dest_ptr [line_byte + 2] |= background_ptr [line_byte + 2] & mask;
+                dest_ptr [line_byte + 3] |= background_ptr [line_byte + 3] & mask;
+            }
+        }
+
         /* Account for the repeated section. The base contains up to five height,
          * so by height 21 there are two body-tiles that can share a pattern. */
         uint8_t body_height_draw = body_height;
