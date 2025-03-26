@@ -370,7 +370,21 @@ void fence_update (void)
             }
         }
 
+        /* The final pattern should show grass on the side and below. */
         uint16_t grass_panel = ((player == 0) ? 417 : 422);
+        {
+            const uint8_t *background_ptr = (const uint8_t *) &background_patterns [background_indices [grass_panel] << 3];
+            uint8_t *dest_ptr = &pattern_buffer [buffer_index - 20];
+            uint8_t mask = (player == 0) ? 0xf8 : 0x1f;
+            for (uint8_t line_byte = 0; line_byte < 20; line_byte += 4)
+            {
+                /* Because we've filled it with blue in the .png, we need to mask both sides of the equation. */
+                dest_ptr [line_byte + 0] = dest_ptr [line_byte + 0] & ~mask | background_ptr [line_byte + 0] & mask;
+                dest_ptr [line_byte + 1] = dest_ptr [line_byte + 1] & ~mask | background_ptr [line_byte + 1] & mask;
+                dest_ptr [line_byte + 2] = dest_ptr [line_byte + 2] & ~mask | background_ptr [line_byte + 2] & mask;
+                dest_ptr [line_byte + 3] = dest_ptr [line_byte + 3] & ~mask | background_ptr [line_byte + 3] & mask;
+            }
+        }
         memcpy (&pattern_buffer [buffer_index], &background_patterns [(background_indices [grass_panel] << 3) + 5], 12);
 
         /* Write to VRAM */
