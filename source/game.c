@@ -735,6 +735,10 @@ void game_start (void)
     }
     SMS_loadTileMapArea (4, 0, vdp_background_indices, 24, 18);
 
+    /* Extend background sky to cover areas above panels */
+    SMS_loadTileMapArea ( 0, 0, vdp_background_indices, 4, 1);
+    SMS_loadTileMapArea (28, 0, vdp_background_indices, 4, 1);
+
     /* Extend background grass to cover areas below panels */
     uint16_t grass_left [4] = {
         vdp_background_indices [408], vdp_background_indices [408],

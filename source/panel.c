@@ -18,6 +18,7 @@ extern const uint16_t player_panels [] [8];
 extern const uint32_t player_patterns [];
 extern const uint16_t panel_indices [];
 extern const uint32_t panel_patterns [];
+extern const uint32_t background_patterns [];
 
 /* Game state */
 extern uint16_t wins [2];
@@ -32,9 +33,12 @@ static uint16_t panel_cache [2] [FIELD_MAX];
 void panel_update_wins (uint8_t player)
 {
     /* A pair of buffers to hold the patterns we will draw into,
-     * initialised to black. */
+     * initialised to sky-blue from the first background pattern. */
     uint8_t buffer_l [32] = { 0 };
     uint8_t buffer_r [32] = { 0 };
+
+    memcpy (buffer_l, background_patterns, 32);
+    memcpy (buffer_r, background_patterns, 32);
 
     const uint16_t value = wins [player];
     if (value > 999)
@@ -49,7 +53,7 @@ void panel_update_wins (uint8_t player)
 
     const uint8_t y_offset = 1;
 
-    uint8_t colour_index = 4; /* Green */
+    uint8_t colour_index = 13; /* Dark green */
 
     /* Draw the digit font into the pattern */
     for (uint8_t line = 0; line < 5; line++)
