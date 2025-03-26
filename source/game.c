@@ -735,6 +735,18 @@ void game_start (void)
     }
     SMS_loadTileMapArea (4, 0, vdp_background_indices, 24, 18);
 
+    /* Extend background grass to cover areas below panels */
+    uint16_t grass_left [4] = {
+        vdp_background_indices [408], vdp_background_indices [408],
+        vdp_background_indices [408], vdp_background_indices [408]
+    };
+    uint16_t grass_right [4] = {
+        vdp_background_indices [431], vdp_background_indices [431],
+        vdp_background_indices [431], vdp_background_indices [431]
+    };
+    SMS_loadTileMapArea ( 0, 17, grass_left, 4, 1);
+    SMS_loadTileMapArea (28, 17, grass_right, 4, 1);
+
     /* Draw the draw deck and side panels */
     render_card_as_background (12, 0, CARD_BACK, 9);
     render_card_as_background (16, 0, CARD_NONE, 8);
