@@ -10,6 +10,8 @@
 
 #include "SMSlib.h"
 
+#include "bank_3.h"
+
 #include "vram.h"
 #include "game.h"
 
@@ -20,6 +22,7 @@ extern const uint32_t castles_patterns [];
 extern const uint16_t fence_panels [2] [2];
 extern const uint32_t fence_patterns [];
 
+extern uint16_t background_indices [432]; /* 192 × 144 area */
 extern uint16_t vdp_background_indices [432]; /* 192 × 144 area */
 
 /* Game state */
@@ -168,10 +171,14 @@ void castle_update (void)
                 else
                 {
                     memcpy (&pattern_buffer [col] [buffer_index], &castles_patterns [(castles_panels [player] [12 + col] << 3)], body_height_draw << 2);
-                    buffer_index += body_height_draw << 2; /* TODO: Needed to feed in the background? */
+                    buffer_index += body_height_draw << 2;
                     body_height_draw = 0;
                 }
             }
+
+            /* Grass below the castle - Three lines */
+            uint16_t grass_panel = ((player == 0) ? 410 : 424) + col;
+            memcpy (&pattern_buffer [col] [buffer_index], &background_patterns [(background_indices [grass_panel] << 3) + 5], 12);
 
             /* Advance to the next strip */
             strip_vram_base += 5;
@@ -320,6 +327,9 @@ void fence_update (void)
                 body_height_draw = 0;
             }
         }
+
+        uint16_t grass_panel = ((player == 0) ? 417 : 422);
+        memcpy (&pattern_buffer [buffer_index], &background_patterns [(background_indices [grass_panel] << 3) + 5], 12);
 
         /* Write to VRAM */
         SMS_waitForVBlank ();
