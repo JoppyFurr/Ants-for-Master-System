@@ -10,7 +10,7 @@
  */
 
 extern const uint32_t player_patterns [256];
-extern const uint32_t panel_patterns [392];
+extern const uint32_t panel_patterns [480];
 extern const uint32_t castles_patterns [];
 extern const uint32_t fence_patterns [];
 extern const uint32_t background_patterns [208];

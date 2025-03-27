@@ -24,7 +24,7 @@
  *   [307..336] - Castle dynamic buffer (right)
  *   [337..340] - Win-counter digits
  *   [341..356] - Player indicators
- *   [357..405] - Panels <-- Contains recoverable patterns where digits will go.
+ *   [357..416] - Panels <-- Contains recoverable patterns where digits will go.
  *   [422..447] - Background, up against the edge of the name-table.
  *
  *   [341..344] - Fence dynamic buffer (left)
