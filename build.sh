@@ -83,7 +83,7 @@ build_ants_for_master_system ()
             --sprite-palette ${GAME_SPRITE_PALETTE} \
             --background-palette 0x00 0x3f 0x1f \
             --background --panels 4x2,4 tiles/player.png \
-            --background tiles/panel.png \
+            --background --panels 4x14,2 tiles/panel.png \
             --background --panels 6x3,2 tiles/castles.png \
             --background --panels 1x2,2 tiles/fence.png \
             --background tiles/background.png

@@ -25,7 +25,7 @@
  *   [337..340] - Win-counter digits
  *   [341..372] - Player indicators
  *   [373..412] - Panels indicators <-- Contains recoverable patterns where digits will go.
- *   [413..437] - Background
+ *   [413..438] - Background
  *
  *   [341..344] - Fence dynamic buffer (left)
  *   [345..348] - Fence dynamic buffer (right)

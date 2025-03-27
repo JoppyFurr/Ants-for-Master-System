@@ -16,7 +16,7 @@
 /* Pattern and index data */
 extern const uint16_t player_panels [] [8];
 extern const uint32_t player_patterns [];
-extern const uint16_t panel_indices [];
+extern const uint16_t panel_panels [] [56];
 extern const uint32_t panel_patterns [];
 extern const uint32_t background_patterns [];
 
@@ -160,14 +160,15 @@ void panel_init (void)
 
     uint16_t vdp_panel_indices [56];
 
-    for (uint8_t i = 0; i < 56; i++)
+    for (uint8_t player = 0; player < 2; player++)
     {
-        vdp_panel_indices [i] = panel_indices [i] + PATTERN_PANELS;
+        for (uint8_t i = 0; i < 56; i++)
+        {
+            vdp_panel_indices [i] = panel_panels [player] [i] + PATTERN_PANELS;
+        }
+        uint8_t position = (player == 0) ? 0 : 28;
+        SMS_loadTileMapArea (position, 3, vdp_panel_indices, 4, 14);
     }
-
-    /* Copy tilemap from image */
-    SMS_loadTileMapArea (0, 3, vdp_panel_indices, 4, 14);
-    SMS_loadTileMapArea (28, 3, vdp_panel_indices, 4, 14);
 
     /* Set up panel digit areas */
     for (uint8_t i = 0; i < 16; i++)
@@ -227,8 +228,8 @@ void panel_update (void)
         }
 
         /* Start by populating the pattern buffer with the panel background tiles */
-        memcpy (buffer_l,  &panel_patterns [panel_indices [field_backgrounds [field] + 0] << 3], 32);
-        memcpy (buffer_r, &panel_patterns [panel_indices [field_backgrounds [field] + 1] << 3], 32);
+        memcpy (buffer_l,  &panel_patterns [panel_panels [player] [field_backgrounds [field] + 0] << 3], 32);
+        memcpy (buffer_r, &panel_patterns [panel_panels [player] [field_backgrounds [field] + 1] << 3], 32);
 
         /* Draw the digit font into the pattern */
         for (uint8_t line = 0; line < 5; line++)
