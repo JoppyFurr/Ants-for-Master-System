@@ -6,12 +6,12 @@
 /*
  * Title screen VRAM layout:
  *   [  0.. 11] - Cursor
- *   [ 12..409] - Title image
- *   [410..417] - Widgets
+ *   [ 12.. 23] - Widgets
+ *   [ 24..427] - Title image
  */
 #define PATTERN_CURSOR              0
-#define PATTERN_TITLE_IMAGE        12
-#define PATTERN_WIDGETS           410
+#define PATTERN_WIDGETS            12
+#define PATTERN_TITLE_IMAGE        24
 
 /*
  * Gameplay VRAM Layout:

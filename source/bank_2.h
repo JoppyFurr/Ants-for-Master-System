@@ -10,5 +10,5 @@
  */
 
 extern const uint32_t cursor_patterns [64];
-extern const uint32_t title_patterns [3184];
+extern const uint32_t title_patterns [3232];
 extern const uint32_t widgets_patterns [64];
