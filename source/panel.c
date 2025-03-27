@@ -53,7 +53,7 @@ void panel_update_wins (uint8_t player)
 
     const uint8_t y_offset = 1;
 
-    uint8_t colour_index = 13; /* Dark green */
+    uint8_t colour_index = 12; /* Dark green */
 
     /* Draw the digit font into the pattern */
     for (uint8_t line = 0; line < 5; line++)
@@ -174,6 +174,13 @@ void panel_init (void)
         {
             vdp_panel_indices [i] = panel_panels [player] [i] + PATTERN_PANELS;
         }
+
+        /* The crystals need a shade of purple that's not in the background palette.
+         * The palettes have been crafted so that for the crystal patterns can use
+         * the sprite palette and sky-blue becomes purple. */
+        vdp_panel_indices [29] |= 0x0800;
+        vdp_panel_indices [33] |= 0x0800;
+
         uint8_t position = (player == 0) ? 0 : 28;
         SMS_loadTileMapArea (position, 3, vdp_panel_indices, 4, 14);
     }

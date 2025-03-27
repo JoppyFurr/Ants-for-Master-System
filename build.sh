@@ -51,24 +51,29 @@ build_ants_for_master_system ()
     # for both banks of in-game patterns, the palette is defined here.
     # Note that the first three entries are shared with the title sprite palette,
     # so that the same cursor patterns can be used.
+    # The background palette is also fixed, so that a couple of colours can be made
+    # common across both palettes. Eg, to more easily access the purple crystal for
+    # the side-panels.
     # Sprite palette [0] is black (transparent)
-    # Sprite palette [1] is black (cursor)
-    # Sprite palette [2] is white (cursor)
+    # Sprite palette [1] is white (cursor)
+    # Sprite palette [2] is black (cursor)
     # Sprite palette [3] is red (disabled cursor)
     # Sprite palette [4] is green (win counter digits)
-    GAME_SPRITE_PALETTE="0x00 0x00 0x3f 0x02 0x08 0x15 0x2a 0x03 0x3a 0x25 0x2b 0x06 0x1b 0x2e 0x21 0x34"
+    #
+    GAME_BACKGROUND_PALETTE="0x00 0x3f 0x1f 0x3c 0x15 0x2a 0x03 0x2b 0x02 0x00 0x2e 0x19 0x04 0x3a 0x38 0x25"
+    GAME_SPRITE_PALETTE="0x00 0x3f 0x00 0x02 0x08 0x15 0x2a 0x03 0x2b 0x06 0x1b 0x2e 0x34 0x3a 0x21 0x25"
 
 
     echo "  Generating tile data..."
     mkdir -p title_tile_data
     (
         # Sprite palette [0] is black (transparent)
-        # Sprite palette [1] is black (cursor)
-        # Sprite palette [2] is white (cursor)
+        # Sprite palette [1] is white (cursor)
+        # Sprite palette [2] is black (cursor)
         # Sprite palette [3] is red (disabled cursor)
         # Background palette [0] is black (background colour)
         ${sneptile} --sprites --output-dir title_tile_data \
-            --sprite-palette 0x00 0x00 0x3f 0x02 \
+            --sprite-palette 0x00 0x3f 0x00 0x02 \
             --background-palette 0x00 \
             --panels 2x2,3 tiles/cursor.png \
             --background tiles/title.png \
@@ -81,7 +86,7 @@ build_ants_for_master_system ()
         # Background palette [2] is yellow (digit printing)
         ${sneptile} --sprites --output-dir game_tile_data \
             --sprite-palette ${GAME_SPRITE_PALETTE} \
-            --background-palette 0x00 0x3f 0x1f \
+            --background-palette ${GAME_BACKGROUND_PALETTE} \
             --background --panels 4x2,4 tiles/player.png \
             --background --panels 4x14,2 tiles/panel.png \
             --background --panels 6x3,2 tiles/castles.png \
