@@ -51,7 +51,7 @@ void panel_update_wins (uint8_t player)
     const uint8_t digit_1 = (value % 100) / 10;   /* Tens */
     const uint8_t digit_2 = value / 100;          /* Hundreds */
 
-    const uint8_t y_offset = 1;
+    const uint8_t y_offset = 2;
 
     uint8_t colour_index = 12; /* Dark green */
 
