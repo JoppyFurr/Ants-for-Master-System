@@ -14,6 +14,9 @@ void panel_init_wins (void);
 /* Update the player indicator at the top of the screen. */
 void panel_update_player (uint8_t player);
 
+/* Sets up the name-table entries for the player indicators. */
+void panel_init_player (void);
+
 /* Initialise the side-panel. */
 void panel_init (void);
 

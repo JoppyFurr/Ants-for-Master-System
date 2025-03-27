@@ -124,24 +124,32 @@ void panel_init_wins (void)
  */
 void panel_update_player (uint8_t player)
 {
-    uint16_t left [8];
-    uint16_t right [8];
+    SMS_mapROMBank (3);
 
     if (player == 0)
     {
-        for (uint8_t i = 0; i < 8; i++)
-        {
-            left [i] = player_panels [2] [i] + PATTERN_PLAYERS;
-            right [i] = player_panels [1] [i] + PATTERN_PLAYERS;
-        }
+        SMS_loadTiles (&player_patterns[0], PATTERN_PLAYERS, 512);
     }
     else
     {
-        for (uint8_t i = 0; i < 8; i++)
-        {
-            left [i] = player_panels [0] [i] + PATTERN_PLAYERS;
-            right [i] = player_panels [3] [i] + PATTERN_PLAYERS;
-        }
+        SMS_loadTiles (&player_patterns[128], PATTERN_PLAYERS, 512);
+    }
+
+}
+
+
+/*
+ * Sets up the name-table entries for the player indicators.
+ */
+void panel_init_player (void)
+{
+    uint16_t left [8];
+    uint16_t right [8];
+
+    for (uint8_t i = 0; i < 8; i++)
+    {
+        left [i] = player_panels [0] [i] + PATTERN_PLAYERS;
+        right [i] = player_panels [1] [i] + PATTERN_PLAYERS;
     }
 
     /* Write to VDP */

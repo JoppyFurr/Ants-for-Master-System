@@ -41,8 +41,6 @@ extern void render_card_as_background (uint8_t x, uint8_t y, card_t card, uint8_
 extern void delay_frames (uint8_t frames);
 
 /* Shared data */
-uint16_t player_patterns_start = 0;
-uint16_t panel_patterns_start = 0;
 extern bool reset;
 
 /* Game Settings */
@@ -723,8 +721,8 @@ void game_start (void)
     clear_background ();
 
     /* Player indicators and panels are in bank 3 */
+    panel_init_player ();
     SMS_mapROMBank (3);
-    SMS_loadTiles (player_patterns, PATTERN_PLAYERS, sizeof (player_patterns));
     SMS_loadTiles (panel_patterns, PATTERN_PANELS, sizeof (panel_patterns));
 
     card_buffer_prepare ();
