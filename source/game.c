@@ -530,23 +530,29 @@ static void draw_cursor (uint8_t x)
     card_t card = hands [player] [x];
     x = (x << 5) + 8;
 
-    SMS_initSprites ();
+    /* To save some VRAM pattern memory, only
+     * keep one cursor loaded at a time. */
 
+    /* The cursors are in bank 2 */
+    SMS_mapROMBank (2);
     if (card_valid (card))
     {
-        /* Cursor patterns are loaded at the base of vram */
-        SMS_addSprite (x,     172,     PATTERN_HAND_CURSOR    );
-        SMS_addSprite (x + 8, 172,     PATTERN_HAND_CURSOR + 1);
-        SMS_addSprite (x,     172 + 8, PATTERN_HAND_CURSOR + 2);
-        SMS_addSprite (x + 8, 172 + 8, PATTERN_HAND_CURSOR + 3);
+        SMS_loadTiles (&cursor_patterns [32], PATTERN_HAND_CURSOR, 128);
     }
     else
     {
-        SMS_addSprite (x,     172,     PATTERN_HAND_CURSOR + 4);
-        SMS_addSprite (x + 8, 172,     PATTERN_HAND_CURSOR + 5);
-        SMS_addSprite (x,     172 + 8, PATTERN_HAND_CURSOR + 6);
-        SMS_addSprite (x + 8, 172 + 8, PATTERN_HAND_CURSOR + 7);
+        SMS_loadTiles (&cursor_patterns [64], PATTERN_HAND_CURSOR, 128);
     }
+    SMS_mapROMBank (3);
+
+
+    SMS_initSprites ();
+
+    /* Cursor patterns are loaded at the base of vram */
+    SMS_addSprite (x,     172,     PATTERN_HAND_CURSOR    );
+    SMS_addSprite (x + 8, 172,     PATTERN_HAND_CURSOR + 1);
+    SMS_addSprite (x,     172 + 8, PATTERN_HAND_CURSOR + 2);
+    SMS_addSprite (x + 8, 172 + 8, PATTERN_HAND_CURSOR + 3);
 
     SMS_copySpritestoSAT ();
 }
@@ -715,10 +721,6 @@ void game_start (void)
     /* Setup for gameplay */
     SMS_loadTiles (blank_pattern, PATTERN_BLANK, sizeof (blank_pattern));
     clear_background ();
-
-    /* The cursors are in bank 2 */
-    SMS_mapROMBank (2);
-    SMS_loadTiles (&cursor_patterns [32], PATTERN_HAND_CURSOR, 256);
 
     /* Player indicators and panels are in bank 3 */
     SMS_mapROMBank (3);
